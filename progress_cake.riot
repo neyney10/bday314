@@ -1,0 +1,96 @@
+<progress_cake>
+    <div id="layer-wrapper">
+        <div class="layer w25">    
+            <progress_bar value={state.progVals[3]} fillColor={state.fillColors[3]}></progress_bar>
+        </div>
+        <div class="layer w50">
+            <progress_bar value={state.progVals[2]} fillColor={state.fillColors[2]}></progress_bar>
+        </div>
+        <div class="layer w75">
+            <progress_bar value={state.progVals[1]} fillColor={state.fillColors[1]}></progress_bar>
+        </div>
+        <div class="layer w100">
+            <progress_bar value={state.progVals[0]} fillColor={state.fillColors[0]}></progress_bar>
+        </div>
+    </div>
+
+
+    <style type="scss">
+
+        progress_bar {
+            position: relative;
+            background: #3F5EFB;
+            background: radial-gradient(circle,rgba(63, 94, 251, 1) 0%, rgba(252, 70, 107, 1) 100%);
+        }
+
+        #layer-wrapper {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            width: 100%;
+        }
+
+        .layer {
+            border: 2px solid black;
+            border-radius: 5px;
+            margin: auto;
+            height: 12px;
+            overflow: clip;
+            box-shadow: 5px 3px 5px 1px rgba(0,0,0,0.5);
+        }
+
+        .w25 {
+            width: 25%;
+        }
+
+        .w50 {
+            width: 50%;
+        }
+
+        .w75 {
+            width: 75%;
+        }
+
+        .w100 {
+            width: 100%;
+        }
+        
+    </style>
+
+    <script>
+        import progress_bar from './progress_bar.riot';
+
+        import { BehaviorSubject } from 'rxjs';
+
+
+        export default { 
+            onMounted(props, state) {
+                props.value.subscribe((v) => {
+                    if (v > 0) state.progVals[0].next(Math.min(100*v / 25, 100));
+                    if (v > 25) state.progVals[1].next(Math.min(100*(v-25) / 25, 100));
+                    if (v > 50) state.progVals[2].next(Math.min(100*(v-50) / 25, 100));
+                    if (v > 75) state.progVals[3].next(Math.min(100*(v-75) / 25, 100));
+                });
+
+                state.layersDomEl = this.$$('.layer');
+            },
+            onUpdated(props, state) {
+            },
+            components: {
+                progress_bar
+            },
+            state: {
+                progVals: [new BehaviorSubject(), new BehaviorSubject(), new BehaviorSubject(), new BehaviorSubject()],
+                layersDomEl: [],
+                fillColors: [
+                    "linear-gradient(90deg,rgba(213, 70, 252, 1) 0%, rgba(252, 70, 107, 1) 100%)",
+                    "linear-gradient(90deg,rgba(252, 70, 107, 1) 0%, rgba(252, 70, 237, 1) 100%)",
+                    "linear-gradient(90deg,rgba(252, 70, 237, 1) 0%, rgba(112, 70, 252, 1) 100%)",
+                    "linear-gradient(90deg,rgba(112, 70, 252, 1) 0%, rgba(70, 176, 252, 1) 100%)"
+
+                ]
+            },
+        }
+    </script>
+
+</progress_cake>

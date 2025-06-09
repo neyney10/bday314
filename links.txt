@@ -1,0 +1,2 @@
+bloom:
+https://discourse.threejs.org/t/how-to-use-bloom-effect-not-for-all-object-in-scene/24244/14

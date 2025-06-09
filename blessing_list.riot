@@ -1,0 +1,135 @@
+<blessing_list>
+    <div id="list">
+        <div class="item" each={ (item, index) in state.items }>
+            <div class="title">
+                { item.title }
+                <c_button id="remove-blessing-btn" onclick={e => removeBlessing(index)} if={state.GState.admin_pin.get() && !state.inProgress.includes(index)}><i class="fa-solid fa-trash-can"></i></c_button>
+            </div>
+            
+            <div class="body">
+                <p>
+                    { item.body }
+                </p>
+            </div>
+
+            <spinner size="1.2em" if={state.inProgress.includes(index)}></spinner>
+        </div>
+    </div>
+
+    <style type="scss">
+
+        #list {
+            display: flex;
+            flex-direction: column;
+            background: radial-gradient(circle,rgba(63, 94, 251, 0.3) 0%, rgba(213, 70, 252, 0.3) 100%);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.15);
+            $blur-size: 15px;
+            backdrop-filter: blur($blur-size);
+            -webkit-backdrop-filter: blur($blur-size);
+            
+            width: auto;
+            padding: 2px;
+            border: double 2px rgba(180,25,150,0.2);
+            border-radius: 16px;
+
+
+            .item {
+                position: relative;
+                border: solid 1px green;
+                border-radius: 16px;
+                padding-bottom: 0.5em;
+                margin-bottom: 0.25em;
+                font-family: Varela;
+                overflow-wrap: break-word;
+                direction: rtl;
+
+
+                .title {
+                    display: flex;
+                    justify-content: center;
+                    font-size: 1.2em;
+                    font-weight: bold;
+                    text-shadow: 0 0 15px rgba(180, 25, 150, 0.5);
+
+                    line-height: 2em;
+                    border-bottom: thick double #32a1ce;
+
+                    #remove-blessing-btn {
+                        position: absolute;
+                        left: 0.3em;
+
+                    }
+                }
+
+                .body {
+                    min-height: 3em;
+                    min-width: 3em;
+                    padding: 0.50em;
+                    p {
+                        margin: 0;
+                    }
+                }
+
+                spinner {
+                    position: absolute;
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-50%, -50%);
+                }
+            }
+        }
+    </style>
+
+    <script>
+        import spinner from './progress_spinner.riot';
+        import c_button from './button.riot';
+
+        import API from './api.js';
+        import State from './services/state.js';
+
+        export default { 
+            onMounted(props, state) {
+                if (props.items)
+                {
+                    this.update({items: [...props.items]});
+                    console.log("blessing_list.onMounted", props.items);
+                }
+
+                if (props.blessingsObs)
+                {
+                    props.blessingsObs.subscribe({
+                        next: b => this.update({items: [...this.state.items, b]})
+                    });
+                }
+
+                State.admin_pin.sub(val => this.update({GState: State}));
+            },
+            async removeBlessing(index) {
+                console.log('removing blessing...', index, State);
+                this.update({inProgress: [...this.state.inProgress, index]});
+                if (await API.removeBlessing(State.cake_uuid.get(), State.admin_pin.get(), index))
+                {
+                    const remIdx = this.state.inProgress.indexOf(index);
+                    this.state.inProgress.splice(remIdx, 1);
+
+                    this.state.items.splice(index, 1);
+
+                    this.update({
+                        inProgress: this.state.inProgress,
+                        items: this.state.items
+                    })
+                }
+            },
+            components: {
+                spinner,
+                c_button
+            },
+            state: {
+                items: [],
+                inProgress: [],
+                GState: State,
+            },
+        }
+    </script>
+
+</blessing_list>

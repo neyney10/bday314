@@ -1,0 +1,38 @@
+<progress_bar>
+    <div id="wrapper">
+        <div id="bar"></div>
+    </div>
+
+    <style type="scss">
+        #wrapper {
+            width: 100%;
+            background-color: grey;
+            height: 100%;
+
+            #bar {
+                width: 1%;
+                height: 100%;
+                background-color: green;
+            }
+        }
+    </style>
+
+    <script>
+        export default { 
+            onMounted(props) {
+                props.value.subscribe((v) => {this.update({value: v})});
+                const bar = this.$('#bar');
+                console.log('fillColor', props.fillColor)
+                bar.style.background = props.fillColor;
+                bar.style.width = this.state.value + "%";
+            },
+            onUpdated(props, state) {
+                this.$('#bar').style.width = this.state.value + "%";
+            },
+            state: {
+                value: 0
+            },
+        }
+    </script>
+
+</progress_bar>

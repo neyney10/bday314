@@ -1,0 +1,91 @@
+<floating_menu>
+  <button id="shareDialogBtn" onclick={showShareDialog}>שתף</button>
+  <button id="colorbtn" onclick={(e) => dispatchEventName(e, 'color')}>צבע</button>
+  <button id="cakebtn" onclick={(e) => dispatchEventName(e, 'cake')}>עוגה</button>
+
+  <c_dialog if={state.isShareDialogVisible} onclose={hideShareDialog}>
+    <div id="dialog-header" slot="header">
+      שיתוף
+    </div>
+
+    <template slot="body">
+      <p>שתף את העוגה עם חברים על מנת לשמח את בעל הברכה.</p>
+      <p>{shareLink()}</p>
+
+      <template if={state.GState.admin_pin.get()}>
+        <p>שמור והשתמש בקישור זה על מנת לחזור לנהל את העוגה.</p>
+        <p>{adminLink()}</p>
+      </template>
+    </template>
+
+    <template slot="actions">
+      <c_button id="1" onclick={copyShareLinkToClipboard}>העתק</c_button>
+    </template>
+  </c_dialog>
+
+
+  <c_snackbar duration={3} if={state.isSnackbarVisible} onclose={hideSnacbkbar}>
+    הקישור הועתק!
+  </c_snackbar>
+
+  <!-- style -->
+  <style type="scss">
+    :host {
+      background-color: transparent;
+      display: flex;
+      flex-direction: column;
+    }
+
+  </style>
+
+  <script>
+    import c_dialog from './dialog.riot';
+    import c_button from './button.riot';
+    import c_snackbar from './snackbar.riot';
+
+    import State from './services/state.js';
+
+    export default { 
+        onMounted() {
+        },
+        dispatchEventName(e, eventName) {
+          console.log('menu', 'click', eventName);
+          e.stopPropagation();
+          this.root.dispatchEvent(new Event(eventName));
+        },
+        copyShareLinkToClipboard() {
+          navigator.clipboard.writeText(this.shareLink());
+          this.showSnacbkbar();
+        },
+        shareLink() {
+          return `http://www.bday314.co.il/cake/${this.state.GState.cake_uuid.get()}`;
+        },
+        adminLink() {
+          return this.shareLink() + `-${this.state.GState.admin_pin.get()}`;
+        },
+        showShareDialog(e) {
+          this.update({isShareDialogVisible: true})
+        },
+        hideShareDialog(e) {
+          this.update({isShareDialogVisible: false})
+        },
+        showSnacbkbar() {
+            this.update({isSnackbarVisible: true})
+        },
+        hideSnacbkbar() {
+            this.update({isSnackbarVisible: false})
+        },
+        components: {
+          c_dialog,
+          c_button,
+          c_snackbar
+        },
+        state: {
+          isShareDialogVisible: false,
+          isSnackbarVisible: false,
+          GState: State
+        }
+    }
+  </script>
+</floating_menu>
+

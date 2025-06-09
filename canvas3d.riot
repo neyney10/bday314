@@ -1,0 +1,403 @@
+<canvas3d>
+  <div id="canvasWrapper"></div>
+
+  <div id="menu" if={getStateName() == 'mainMenu' && state.GState.cake_uuid.get()}>
+    <floating_menu oncolor={changeCakeColor} oncake={zoomToCake}></floating_menu>
+  </div>
+  <blessing_list if={getStateName() == 'mainMenu'} items={state.blessings} blessingsObs={state.blessingsObs}></blessing_list>
+
+  <div class="description" if={['candleSelection', 'candlePlacement'].includes(getStateName())}>
+    <p>{state.description}</p>
+  </div>
+
+  <cake_menu if={!state.GState.cake_uuid.get()}
+    oncakeCreated={handleCakeCreated}
+    ondecorationChange={onDecorationChange}
+    oncakeTypeChange={onCakeTypeChange}
+    ontitleChanged={setCakeTitle}>
+  </cake_menu>
+  <candle_selection if={getStateName() == 'candleSelection'} 
+    candleTypes={state.candleTypes}
+    onselected={selectedCandle} 
+    onprev={changeCandleType}
+    onnext={changeCandleType}
+    onop1prev={changeCandleColor1}
+    onop1next={changeCandleColor1}
+    onop2prev={changeCandleColor2}
+    onop2next={changeCandleColor2}>
+  </candle_selection>
+  <write_blessing if={getStateName() == 'writeBlessing'} onnewBlessing={addNewBlessing} oncancel={cancelBlessing}></write_blessing>
+
+
+  
+  <!-- style -->
+  <style type="scss">
+    @use "breakpoints";
+
+    :host {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+    }
+
+    #menu {
+      z-index: 1;
+      position: fixed;
+      top: 10pt;
+      right: 10pt;
+      display: flex;
+      flex-direction: column;
+      direction: rtl;
+
+    }
+
+      blessing_list {
+        background-color: transparent;
+        position: fixed;
+        right: 0.5em;
+        top: 0.5em;
+        display: block;
+        max-width: 35vw;
+        max-height: 100vh;
+        overflow-y: auto;
+
+        @media (max-width: breakpoints.$tablet) {
+          position: relative;
+          right: 0;
+          top: calc(100vh - 10em);
+          width: 98%;
+          max-width: 98%;
+          margin: auto;
+          height: 100%;
+          max-height: none;
+
+        }
+
+      }
+
+    #canvasWrapper {
+      overflow: clip;
+      position: fixed;
+
+      canvas {
+        touch-action: auto!important;
+        pointer-events: none;
+      }
+    }
+
+    .description {
+      position: fixed;
+      z-index: 1;
+
+      background-color: rgba(255,255,255,0.3);
+      $blur-size: 7px;
+      backdrop-filter: blur($blur-size);
+      -webkit-backdrop-filter: blur($blur-size);
+      max-width: 80%;
+      width: fit-content;
+      top: 0.5em;
+      padding-left: 0.5em;
+      padding-right: 0.5em;
+      border-radius: 5px;
+
+      left: 50%;
+      transform: translate(-50%,0);
+      box-shadow: 0 0 5px 3px rgba(0,0,0,0.15);
+
+      p {
+        text-align: center;
+        font-size: 2em;
+        padding: 0;
+        margin: 0;
+      }
+    }
+  </style>
+
+  <script>
+    import floating_menu from './floating_menu.riot';
+    import candle_selection from './candle_selection.riot';
+    import write_blessing from './write_blessing.riot';
+    import progress_bar from './progress_bar.riot';
+    import blessing_list from './blessing_list.riot';
+    import cake_menu from './cake_menu.riot';
+
+    import { Subject } from 'rxjs';
+    import { createActor } from 'xstate';
+    import * as THREE from 'three';
+    import { menuMachine } from './menu_state_machine.js';
+    import { Canvas3dApp } from './canvas3d_app.js'
+    import { CandleObject, CakeObject, Bday314Object } from './object.js';
+    import * as API from './api.js';
+    import State from './services/state.js';
+
+
+    function cakeModelFromType(type) {
+      let modelName = '';
+      switch (type) {
+        case "layers":
+          modelName = 'tempcake2.glb';
+          break;
+        case "penguin":
+          modelName = 'pengucake.glb';
+          break;
+      };
+
+      return modelName;
+    }
+
+
+    export default {  
+      async onMounted(props) {
+        this.state.app = new Canvas3dApp();
+        this.state.app.init(props.models);
+        this.state.app.menuActor = this.state.menuActor;
+        this.state.app.candleBlessingConfig = {
+            text: {}
+        };
+        Object.assign(this.state.app.cakeConfig, {
+            type: 'layers',
+            decoration: {type: 'snow'},
+            colors: {}
+        });
+
+        this.$("#canvasWrapper").appendChild(this.state.app.domElement);
+
+        this.state.menuActor.subscribe((newMenuState) => {
+            this.update({menuState: newMenuState});
+            console.log("menu state:", newMenuState.value, this.getStateName()); 
+        });
+        this.state.menuActor.start();
+
+        this.state.candleTypes = [
+          { name: 'bicolor', model: props.models['candle2.glb'], option1: "color", option2: "color" },
+          { name: 'sparkler', model: props.models['sparkler.glb'] }
+        ];
+
+        State.cake_uuid.sub(uuid => this.update({GState: State}));
+
+        // temp
+        const cakeData = props.cakeData;
+        console.debug('[debug]', 'canvad3d:onMounted', 'cakeData', cakeData);
+        if (cakeData)
+        {
+          this.state.app.cakeConfig.type = cakeData.cake.type;
+          this.state.app.world.remove(this.state.app.cakeConfig.obj);
+          
+          const bday314cake = new CakeObject(this.props.models[cakeModelFromType(this.state.app.cakeConfig.type)], this.global);
+          bday314cake.position.set(0,0.30,0);
+          this.state.app.world.add(bday314cake);
+          this.state.app.cakeConfig.obj = bday314cake;
+
+
+          State.cake_uuid.set(cakeData.meta.uuid);
+          const currUrl = window.location.href;
+          const splittedCurrUrl = currUrl.split('/');
+          const cakeIdFromUrl = splittedCurrUrl[splittedCurrUrl.length-1];
+          if (cakeIdFromUrl.split('-').length > 1)
+            State.admin_pin.set(cakeIdFromUrl.split('-')[1]);
+
+          this.state.blessings = cakeData.blessings.map(b => b.text);
+
+          for (const b of cakeData.blessings)
+          {
+            this.state.blessingsObs.next(b.text);
+            this.state.app.addCandle(b.candle);
+          }
+
+          this.state.app.cakeConfig.decoration = cakeData.cake.decoration;
+          this.state.app.setDecoration(cakeData.cake.decoration);
+
+          this.state.app.setTitleText(cakeData.meta.title);
+        }
+      },
+      getStateName() {
+        const value = this.state.menuState?.value;
+        if (!value)
+            return '';
+
+        if (typeof value === 'string')
+            return value;
+
+        return Object.values(this.state.menuState.value)[0];
+      },
+      onCakeTypeChange(e) {
+        console.log('onCakeTypeChange')
+        this.state.app.cakeConfig.type = e.detail;
+        this.state.app.world.remove(this.state.app.cakeConfig.obj);
+        
+        const bday314cake = new CakeObject(this.props.models[cakeModelFromType(e.detail)], this.global);
+        bday314cake.position.set(0,0.30,0);
+        this.state.app.world.add(bday314cake);
+        this.state.app.cakeConfig.obj = bday314cake;
+      },
+      onDecorationChange(e) {
+        this.state.app.cakeConfig.decoration.type = e.detail;
+        this.state.app.setDecoration({
+          type: e.detail
+        });
+      },
+      setCakeTitle(e) {
+        const title = e.detail;
+        this.state.app.setTitleText(title);
+      },
+      changeCakeColor() {
+        const cake = this.state.app.cakeConfig.obj;
+        cake.obj.traverse((child) => {
+          if (child.isMesh) {
+              child.material.color.setRGB(Math.random(), Math.random(), Math.random());
+          }
+        })
+      },
+      changeCandleType(e) {
+        const candlePos = this.state.app.candleBlessingConfig.candle.obj.position.clone();
+        // remove
+        this.state.app.world.remove(this.state.app.candleBlessingConfig.candle.obj);
+        // add
+        const candleModel = e.detail.model;
+        console.debug('changeCandleType', candleModel);
+        const candle = new Bday314Object(candleModel, this.state.app.global);
+        candle.position.copy(candlePos);
+        this.state.app.candleBlessingConfig.candle.type = e.detail.name;
+        this.state.app.candleBlessingConfig.candle.obj = candle;
+        this.state.app.world.add(this.state.app.candleBlessingConfig.candle.obj);
+      },
+      changeCandleColor1(e) {
+        const candle = this.state.app.candleBlessingConfig.candle.obj;
+        if (!candle)
+            return;
+        const body = candle.obj.getObjectByName('body');
+        let s1 = body.getObjectByName('Mesh_0');
+        console.log(candle, s1, e.detail);
+        s1.material.color = new THREE.Color(e.detail);
+
+        this.state.app.candleBlessingConfig.candle.colors[0] = s1.material.color;
+      },
+      changeCandleColor2(e) {
+        const candle = this.state.app.candleBlessingConfig.candle.obj;
+        if (!candle)
+            return;
+        const body = candle.obj.getObjectByName('body');
+        let s2 = body.getObjectByName('Mesh_0_1');
+        console.log(candle, s2, e.detail);
+        s2.material.color = new THREE.Color(e.detail);
+
+        this.state.app.candleBlessingConfig.candle.colors[1] = s2.material.color;
+      },
+      zoomToCake() {
+        if (this.getStateName() != 'mainMenu')
+            return;
+
+        const cake = this.state.app.cakeConfig.obj;
+        const candle = new CandleObject(this.props.models['candle2.glb'], this.state.app.global);
+        candle.position.set(cake.position.x, cake.position.y+0.75, cake.position.z+1);
+        this.state.app.world.add(candle);
+        this.state.app.candleBlessingConfig.candle = {
+            type: 'bicolor',
+            colors: [undefined, undefined],
+            pos: {x:0, y: 0, z: 0},
+            obj: candle
+        };
+
+        this.state.app.renderer.renderLoop(); // perform a single render so that the controls can find the newly added candle in the scene.
+        this.state.app.controls.fitToSphere(candle.obj, true );
+
+        this.update({description: "בחר נר"});
+        this.state.menuActor.send({ type: 'candle_and_blessing' });
+      },
+      selectedCandle(e) {
+        const candleData = e.detail;
+        this.state.app.candleBlessingConfig.candle.type = candleData.type.name;
+        this.state.app.candleBlessingConfig.candle.colors = candleData.options;
+        console.log('selectedCandle',  candleData.options, this.state.app.candleBlessingConfig.candle);
+        this.state.app.selectedCandle(this.state.menuActor);
+        this.update({description: "בחר מיקום לנר"});
+      },
+      addNewBlessing(event) {
+        console.log('canvas3d', 'addNewBlessing', event);
+        this.state.app.candleBlessingConfig.text = event.detail;
+        console.log(this.state.app.candleBlessingConfig);
+        const currUrl = window.location.href;
+        const splittedCurrUrl = currUrl.split('/');
+        const cakeId = splittedCurrUrl[splittedCurrUrl.length-1];
+        let candleData = {
+          type: this.state.app.candleBlessingConfig.candle.type,
+          pos: this.state.app.candleBlessingConfig.candle.pos,
+        };
+        if (candleData.type == 'bicolor')
+        {
+          candleData.colors = this.state.app.candleBlessingConfig.candle.colors;
+        }
+        API.addBlessing(cakeId, {
+            candle: candleData,
+            text: this.state.app.candleBlessingConfig.text
+        });
+        this.state.blessings.push(this.state.app.candleBlessingConfig.text);
+        this.state.blessingsObs.next(this.state.app.candleBlessingConfig.text);
+
+        this.state.app.controls.setTarget(
+          this.state.app.cameraStartTarget.x,
+          this.state.app.cameraStartTarget.y,
+          this.state.app.cameraStartTarget.z,
+          false
+        );
+        this.state.app.controls.setPosition(
+          this.state.app.cameraStartPosition.x,
+          this.state.app.cameraStartPosition.y,
+          this.state.app.cameraStartPosition.z,
+          true
+        );
+
+        this.state.menuActor.send({ type: 'blessed' });
+      },
+      cancelBlessing(e) {
+        this.state.app.world.remove(this.state.app.candleBlessingConfig.candle.obj);
+
+        this.state.app.candleBlessingConfig = {
+            candle: {
+              type: 'bicolor',
+              colors: [undefined, undefined],
+              pos: {x:0, y: 0, z: 0}
+            },
+            text: {}
+        };
+      
+        this.state.app.controls.setTarget(
+          this.state.app.cameraStartTarget.x,
+          this.state.app.cameraStartTarget.y,
+          this.state.app.cameraStartTarget.z,
+          false
+        );
+        this.state.app.controls.setPosition(
+          this.state.app.cameraStartPosition.x,
+          this.state.app.cameraStartPosition.y,
+          this.state.app.cameraStartPosition.z,
+          true
+        );
+
+        this.state.menuActor.send({ type: 'cancel' });
+      },
+      handleCakeCreated(e) {
+        console.log('canvas3d', 'handleCakeCreated', e);
+        this.state.app.setTitleText(e.detail.title);
+      },
+      components: {
+        floating_menu,
+        candle_selection,
+        write_blessing,
+        progress_bar,
+        blessing_list,
+        cake_menu
+      },
+      state: {
+        menuState: '',
+        menuActor: createActor(menuMachine),
+        blessingsObs: new Subject(),
+        blessings: [],
+        GState: State,
+        description: ''
+      }
+    }
+  </script>
+</canvas3d>
+

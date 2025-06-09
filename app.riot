@@ -1,0 +1,151 @@
+<app>
+  <div if={state.showFrontScreen} id="front-screen">
+    <div id="front-screen-content">
+        <progress_cake id="progress-cake" value={state.progVal}></progress_cake>
+        <div class="loading-text">מכינים את העוגה שלכם...</div>
+        <div class="loading-text">המתינו במתיקות...</div>
+    </div>
+  </div>
+
+  <canvas3d if={state.finishedLoading} models={state.models} cakeData={state.cakeData}></canvas3d>
+  <p></p>
+
+  <!-- style -->
+  <style type="scss">
+    @use "typography";
+    @use "animation";
+
+    #front-screen {
+      position: fixed;
+      top: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: 5;
+      background: white;
+      background: radial-gradient(circle, rgba(238,174,202,1) 0%, rgba(148,187,233,1) 100%);
+
+
+      #front-screen-content {
+        width: fit-content;
+          
+        display: flex;
+        flex-direction: column;
+
+        position: relative;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+
+        #progress-cake {
+
+          z-index: 6;
+        }
+
+        .loading-text {
+          text-align: center;
+          direction: rtl;
+          font-size: 2em;
+        }
+      }
+    }
+
+    .fade-out {
+      opacity: 0;
+      @include animation.animate(fadeOutOpacity, 1s, ease-in, 1);
+    } 
+
+      @include animation.keyframes(fadeOutOpacity) {
+      0% {
+          opacity : 1;
+      }
+      100% {
+          opacity : 0;
+      }
+    }
+
+  </style>
+
+  <script>
+    import canvas3d from './canvas3d.riot';
+    import progress_bar from './progress_bar.riot';
+    import progress_cake from './progress_cake.riot';
+
+    import { BehaviorSubject } from 'rxjs';
+    import { ModelLoader } from './model_loader.js';
+    import { preloadFont } from 'troika-three-text';
+    import * as API from './api.js';
+
+
+
+    export default {
+      async onMounted() {
+        const preloadFonts = new Promise( function (resolve, reject) {
+            preloadFont({
+              font: '/fonts/TrashimCLM-Bold.otf', 
+              characters: 'קראטוןםפשדגכעיחלךףזסבהנמצתqwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM1234567890'
+            },
+            resolve
+          );
+        });
+
+        const currUrl = window.location.href;
+        const splittedCurrUrl = currUrl.split('/');
+        const cakeIdFromUrl = splittedCurrUrl[splittedCurrUrl.length-1];
+
+        const modelPaths = [
+          '/candleless_cake3.glb',
+          '/candle2.glb',
+          '/sparkler.glb',
+          '/table_colored.glb',
+          '/caketurntable.glb',
+          '/tempcake2.glb',
+          '/pengucake.glb',
+          '/ballon.glb',
+          '/balloon2.glb',
+          '/balloon3.glb',
+          '/tempflame.glb'
+        ];
+
+        const [_, cakeData, models] = await Promise.all([
+          preloadFonts, 
+          API.getCake(cakeIdFromUrl),
+          new ModelLoader().load(modelPaths, (progress) => {
+            console.log('progress', progress);
+            this.state.progVal.next(progress * 100);
+          })
+        ]);
+
+        this.state.cakeData = cakeData;
+  
+        console.log('all models loaded, app is ready');
+
+        this.$("#front-screen").classList.add("fade-out");
+
+        setTimeout(() => {
+          this.update({
+            showFrontScreen: false,
+          });
+        }, 2000);
+
+        this.update({
+          finishedLoading: true,
+          models: models
+        });
+
+      },
+      components: {
+        canvas3d,
+        progress_bar,
+        progress_cake
+      },
+      state: {
+        progVal: new BehaviorSubject(),
+        models: [],
+        finishedLoading: false,
+        showFrontScreen: true,
+        cakeData: null
+      }
+    }
+  </script>
+</app>
+

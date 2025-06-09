@@ -1,0 +1,235 @@
+<cake_menu>
+    <div id="wrapper">
+        <stepper steps={3}>
+            <template slot="step1">
+                <div class="horizontal-line"></div>
+                <div id="decorations">
+                    <c_button class={state.selectedDecoration == 'snow' ? 'selected' : null } onclick={e => selectDecoration('snow')}>
+                        <div class="button-img">
+                            <img src="/images/snow.png">
+                        </div>
+                        <div class="button-text">
+                            נקודות שלג
+                        </div>
+                    </c_button>
+                    <c_button class={state.selectedDecoration == 'balloons' ? 'selected' : null} onclick={e => selectDecoration('balloons')}>
+                        <div class="button-img">
+                            <img src="/images/balloons.png">
+                        </div>
+                        <div class="button-text">
+                            בלונים
+                        </div>
+                    </c_button>
+                </div>
+
+                <div class="horizontal-line"></div>
+                <div id="cakeOptions">
+                    <c_button class={state.selectedCakeType == 'layers' ? 'selected' : null} onclick={e => selectCake('layers')}>
+                        <div class="button-img">
+                            <img src="/images/layers_cake.png">
+                        </div>
+                        <div class="button-text">
+                            עוגת שכבות
+                        </div>
+                    </c_button>
+                    <c_button class={state.selectedCakeType == 'penguin' ? 'selected' : null} onclick={e => selectCake('penguin')}>פנגווין</c_button>
+                </div>
+            </template>
+
+            <template slot="step2">
+                <input id="cakeTitle" placeholder="מזל טוב!" onkeypress={onCakeTitleEdit} value={state.cakeTitle}>
+            </template>
+
+            <template slot="step3">
+                <c_button onclick={(e) => createCake()} if={!state.created}>צור עוגה!</c_button>
+                <template if={state.created}>
+                    הזמן חברים להניח נר ולברך באמצעות הקישור הבא:
+                    http://www.bday314.co.il/cake/<uuid>
+                    שמור את הקישור הזה על מנת לחזור לנהל את העוגה שלך
+                    http://www.bday314.co.il/cake/<uuid>-<pin_code>
+
+                </template>
+
+                
+            </template>
+        </stepper>
+        
+
+        
+
+    </div>
+
+    <style type="scss">
+        @use "breakpoints";
+
+        :host {
+            width: 45%;
+            height: 90vh;
+            position: fixed;
+
+            background: RGBA(255,255,255,0.5);
+            background: linear-gradient(45deg,rgba(42, 123, 155, 0.3) 0%, rgba(87, 199, 133, 0.3) 50%, rgba(237, 83, 152, 0.3) 100%);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.15);
+            $blur-size: 15px;
+            backdrop-filter: blur($blur-size);
+            -webkit-backdrop-filter: blur($blur-size);
+
+            right: 0.5em;
+            top: 2.5vh;
+            border-radius: 16px;
+            padding: 0.5em;
+            border: 3px double RGBA(180, 25, 150, 0.2);
+            direction: rtl;
+
+            @media (max-width: breakpoints.$tablet) {
+                width: 90%;
+                background: transparent;
+                backdrop-filter: none;
+            }
+        }
+
+        #wrapper {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+
+        #decorations {
+            display: flex;
+            flex-direction: row;
+            gap: 1em;
+
+            c_button {
+                width: 96px;
+                height: 5em;
+
+                .button-text {
+                    direction: rtl;
+                    margin: auto;
+                }
+
+                .button-img {
+                    img {
+                        width: 48px;
+                        height: 48px;
+                    }
+                }
+            }
+        }
+
+        #cakeOptions {
+            display: flex;
+            flex-direction: row;
+            gap: 1em;
+
+            c_button {
+                width: 96px;
+                height: 5em;
+
+                .button-text {
+                    direction: rtl;
+                    margin: auto;
+                }
+
+                .button-img {
+                    img {
+                        width: 48px;
+                        height: 48px;
+                    }
+                }
+            }
+        }
+
+        .selected {
+            background-color: RGBA(255,0,255,0.5);
+        }
+
+
+        .horizontal-line {
+            height: 1px;
+            border: solid black 1px;
+            width: 95%;
+            margin-top: 0.5em;
+            margin-bottom: 0.5em;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+    </style>
+
+    <script>
+        import stepper from './stepper.riot';
+        import c_button from './button.riot';
+        
+        import * as API from './api.js';
+        import State from './services/state.js';
+
+        export default {
+            async createCake() {
+                const cakeData = {
+                    type: this.state.selectedCakeType,
+                    decoration: {
+                        type: this.state.selectedDecoration
+                    }
+                };
+                const res = await API.createCake(cakeData, this.state.cakeTitle);
+                if (res)
+                {
+                    console.log('created cake', res);
+                    this.dispatchCakeCreatedEvent({cake: cakeData, title: this.state.cakeTitle});
+                    window.history.pushState("", "", `/cake/${res.uuid}-${res.admin_pin}`);
+                    this.update({created: true});
+                    State.cake_uuid.set(res.uuid);
+                    State.admin_pin.set(res.admin_pin);
+                }
+                else
+                {
+                    console.error('failed to create a cake');
+                }
+            },
+            selectDecoration(type) {
+                this.update({selectedDecoration: type});
+                this.dispatchCustomEvent('decorationChange', type);
+            },
+            selectCake(type) {
+                this.update({selectedCakeType: type});
+                this.dispatchCustomEvent('cakeTypeChange', type);
+            },
+            dispatchCakeCreatedEvent(data) {
+                this.dispatchCustomEvent("cakeCreated", data);
+            },
+            dispatchCustomEvent(name, value) {
+                console.log('[debug]', 'cake_menu', 'dispatchCustomEvent', name, value);
+                this.root.dispatchEvent(new CustomEvent(name, {detail: value}));
+            },
+            onCakeTitleEdit(e) {
+                e = e || window.event;
+                const charCode = e.keyCode || e.which;
+                if (charCode == 13) {
+                    // Suppress default action of the keypress
+                    if (e.preventDefault) {
+                        e.preventDefault();
+                    }
+                    e.returnValue = false;
+                }
+
+                console.log(e);
+
+                this.state.cakeTitle = e.target.value + e.key;
+                this.dispatchCustomEvent('titleChanged', this.state.cakeTitle);
+            },
+            components: {
+                stepper,
+                c_button
+            },
+            state: {
+                created: false,
+                cakeTitle: "",
+                selectedDecoration: "snow",
+                selectedCakeType: "layers",
+            }
+        }
+    </script>
+
+</cake_menu>

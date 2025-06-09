@@ -1,0 +1,233 @@
+<candle_selection>
+  <div id="navigation">
+    <button id="leftTypeBtn" onclick={dispatchEventPrev}>
+      <img src="/images/arrow_right.png" style="transform: rotateZ(180deg);">
+    </button>
+    <button id="rightTypeBtn" onclick={dispatchEventNext}>
+      <img src="/images/arrow_right.png">
+    </button>
+  </div>
+
+  <div id="options">
+    <div id="option1" if={state.candleTypes[state.index]?.option1}>
+      <button id="leftOpt1Btn" onclick={(e) => dispatchEventOptionPrev(e, 0)}>
+        <img src="/images/paint.png">
+        <p>1</p>
+      </button>
+      <button id="rightOpt1Btn" onclick={(e) => dispatchEventOptionNext(e, 0)}>
+        <img src="/images/paint.png">
+        <p>1</p>
+      </button>
+    </div>
+
+    <div id="option2" if={state.candleTypes[state.index]?.option2}>
+      <button id="leftOpt2Btn" onclick={(e) => dispatchEventOptionPrev(e, 1)}>
+        <img src="/images/paint.png">
+        <p>2</p>
+      </button>
+      <button id="rightOpt2Btn" onclick={(e) => dispatchEventOptionNext(e, 1)}>
+        <img src="/images/paint.png">
+        <p>2</p>
+      </button>
+    </div>
+  </div>
+
+
+
+  <c_button id="select" onclick={(e) => dispatchEventSelect(e)}>בחר</c_button>
+
+
+  <!-- style -->
+  <style type="scss">
+    :host {
+        z-index: 2;
+        position: fixed;
+        width: 100%;
+        height: 50%;
+        top: 25%;
+        background-color: transparent;
+        display: flex;
+        flex-direction: column;
+    }
+
+    #navigation {
+      display: flex;
+      flex-direction: row;
+      justify-content: space-between;
+      height: 100%;
+
+        button {
+          height: 100%;
+          width: 20%;
+          max-width: 96px;
+          max-height: 96px;
+          background: transparent;
+          padding: 0;
+          border: 0;
+          position: relative;
+          
+          &:hover {
+            cursor: pointer;
+            filter: drop-shadow(3px 3px 0px black);
+          }
+
+          img {
+            max-height: 96px;
+            max-width: 96px;
+          }
+        }
+    }
+
+    #options {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+
+      > div {
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        height: 100%;
+        width: 100%;
+
+        button {
+          height: 100%;
+          width: 20%;
+          max-width: 96px;
+          max-height: 96px;
+          background: transparent;
+          padding: 0;
+          border: 0;
+          position: relative;
+          transition: .15s ease;
+          
+          &:hover {
+            cursor: pointer;
+            filter: drop-shadow(3px 3px 0px black);
+          }
+
+          img {
+            max-height: 96px;
+            max-width: 96px;
+          }
+
+          p {
+            position: absolute;
+            text-align: center;
+            line-height: 96px;
+            width: 96px;
+            font-size: 3em;
+            padding: 0;
+            margin: 0;
+            top: 0;
+          }
+        }
+
+        c_button {
+          height: 100%;
+          width: 20%;
+
+          border-radius: 6px;
+          $blur-size: 15px;
+          backdrop-filter: blur($blur-size);
+          -webkit-backdrop-filter: blur($blur-size);
+          background-color: RGBA(200,0,200, 0.3);
+        }
+      }
+    }
+
+    #select {
+      position: fixed;
+      width: 100%;
+      bottom: 0;
+
+      $blur-size: 15px;
+      backdrop-filter: blur($blur-size);
+      -webkit-backdrop-filter: blur($blur-size);
+      background-color: RGBA(200,0,200, 0.3);
+    }
+
+  </style>
+
+  <script>
+    import c_button from './button.riot';
+
+    const colorOptions = [
+      0xFF0000,
+      0x00FF00,
+      0x0000FF,
+      0xFFFF00,
+      0x00FFFF,
+      0xFF00FF,
+    ];
+
+
+    export default { 
+      
+        onBeforeMount(props) {
+          this.state = {
+            candleTypes: [],
+            index: 0,
+            optionIndices: [0,1]
+          }
+
+
+          if (props.candleTypes)
+          {
+            this.state.candleTypes = props.candleTypes;
+            const currCandleType = this.state.candleTypes[this.state.index];
+            if (currCandleType.option1 == 'color')
+            {
+              this.dispatchEventOptionNext(undefined, 0);
+            }
+            if (currCandleType.option2 == 'color')
+            {
+              this.dispatchEventOptionNext(undefined, 1);
+            }
+          }
+
+          console.log('candle_selection:onBeforeMount', this.state);
+            
+        },
+        dispatchEventPrev(e) {
+          console.log('candle_selection', 'dispatchEventPrev', this.state.index);
+          this.state.index = (this.state.index <= 0)? this.state.candleTypes.length-1 : this.state.index-1;
+          this.update();
+          this.root.dispatchEvent(new CustomEvent("prev", {detail: this.state.candleTypes[this.state.index]}));
+        },
+        dispatchEventNext(e) {
+          console.log('candle_selection', 'dispatchEventNext', this.state.index);
+          this.state.index = (this.state.index >= this.state.candleTypes.length-1)? 0 : this.state.index+1;
+          this.update();
+          this.root.dispatchEvent(new CustomEvent("next", {detail: this.state.candleTypes[this.state.index]}));
+        },
+        dispatchEventSelect(e) {
+          console.log('candle_selection', 'dispatchEventSelect');
+          e.stopPropagation();
+          const candleType = this.state.candleTypes[this.state.index];
+          const selection = {type: candleType};
+          if (candleType.option1)
+            selection.options = [colorOptions[this.state.optionIndices[0]]];
+          if (candleType.option2)
+            selection.options.push(colorOptions[this.state.optionIndices[1]]);
+            
+          this.root.dispatchEvent(new CustomEvent("selected", {detail: selection}));
+        },
+        dispatchEventOptionPrev(e, opNum) {
+          this.state.optionIndices[opNum] = (this.state.optionIndices[opNum] <= 0)? colorOptions.length-1 : this.state.optionIndices[opNum]-1;
+          this.root.dispatchEvent(new CustomEvent(`op${opNum+1}prev`, {detail: colorOptions[this.state.optionIndices[opNum]]}));
+        },
+        dispatchEventOptionNext(e, opNum) {
+          console.log('candle_selection', 'dispatchEventOptionNext', opNum);
+          this.state.optionIndices[opNum] = (this.state.optionIndices[opNum]+1) % colorOptions.length;
+          this.root.dispatchEvent(new CustomEvent(`op${opNum+1}next`, {detail: colorOptions[this.state.optionIndices[opNum]]}));
+        },
+        components: {
+          c_button,
+        },
+        state: {
+        }
+    }
+  </script>
+</candle_selection>
+

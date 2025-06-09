@@ -1,0 +1,123 @@
+<c-dialog>
+  <div id="box" class="fade-in">
+    <div id="slot-header" class="slot-wrapper">
+      <slot name="header"/>
+      <c_button id="close-dialog" onclick={e => dispatchCloseDialogEvent(0.2)}><i class="fa-solid fa-xmark"></i></c_button>
+    </div>
+    <div id="slot-body" class="slot-wrapper">
+        <slot name="body"/>
+    </div>
+    <div id="slot-actions" class="slot-wrapper">
+      <slot id="slot-actions" name="actions"/>
+    </div>
+  </div>
+
+  <!-- style -->
+  <style type="scss">
+    @use "animation";
+
+  
+
+    #box {
+      z-index: 99;
+
+      font-family: Varela;
+      
+      background: rgba(255, 255, 255, 0.2);
+      box-shadow: 0 4px 30px rgba(0, 0, 0, 0.15);
+      $blur-size: 15px;
+      backdrop-filter: blur($blur-size);
+      -webkit-backdrop-filter: blur($blur-size);
+
+      min-height: 100px;
+      min-width: 100px;
+      position: fixed;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+
+      display: flex;
+      flex-direction: column;
+
+      border: 3px solid rgba(150,25,125,0.25);
+      border-radius: 16px;
+
+      padding: 0.25em;
+    }
+
+    .slot-wrapper {
+      width: 100%;
+      height: 100%;
+    }
+
+    #slot-header {
+      font-size: 1.4em;
+      border-bottom: 2px solid rgba(180,25,150, 0.5);
+      text-align: center;
+      padding-bottom: 0.25em;
+
+      display: flex;
+      justify-content: center;
+
+      #close-dialog {
+        position: absolute;
+        left: 0.25em;
+      }
+    }
+
+    #slot-actions {
+      position: relative;
+      bottom: 0;
+    }
+
+
+    .fade-in {
+      @include animation.animate(fadeInOpacity, 0.2s, ease-in, 1);
+    }
+
+    .fade-out {
+      opacity: 0;
+      @include animation.animate(fadeOutOpacity, 0.2s, ease-in, 1);
+    } 
+
+    @include animation.keyframes(fadeInOpacity) {
+      0% {
+          opacity : 0;
+      }
+      100% {
+          opacity : 1;
+      }
+    }
+
+    @include animation.keyframes(fadeOutOpacity) {
+      0% {
+          opacity : 1;
+      }
+      100% {
+          opacity : 0;
+      }
+    }
+  </style>
+
+  <script>
+    import c_button from './button.riot';
+
+
+    export default {
+      dispatchCloseDialogEvent(delay) {
+        this.$("#box").classList.remove("fade-in");
+        this.$("#box").classList.add("fade-out");
+        
+        setTimeout(() => {
+          this.root.dispatchEvent(new Event("close"))
+        }, delay * 1000);
+      },
+      components: {
+        c_button
+      },
+      state: {
+      }
+    }
+  </script>
+</c-dialog>
+

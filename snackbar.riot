@@ -1,0 +1,80 @@
+<c-snackbar>
+
+    <div id="wrapper"  class="fade-in">
+        <slot/>
+    </div>
+    
+    
+
+    <style type="scss">
+        @use "animation";
+
+        #wrapper {
+            z-index: 100;
+            position: fixed;
+            bottom: 2em;
+            left: 50%;
+            transform: translate(-50%, 0);
+
+            background: rgba(180, 25, 150, 0.8);
+            border-radius: 8px;
+            border: solid 3px rgba(255,255,255,0.25);
+            padding: 0.5em;
+            height: 1.5em;
+            line-height: 1.5em;
+
+            box-shadow: 0px 0px 15px rgba(0,0,0,0.3);
+        }
+
+        .fade-in {
+            opacity: 1;
+            @include animation.animate(fadeInOpacity, 0.2s, ease-in, 1);
+        }
+
+        .fade-out {
+            opacity: 0;
+            @include animation.animate(fadeOutOpacity, 0.2s, ease-in, 1);
+        } 
+
+        @include animation.keyframes(fadeInOpacity) {
+            0% {
+                opacity : 0;
+            }
+            100% {
+                opacity : 1;
+            }
+        }
+
+        @include animation.keyframes(fadeOutOpacity) {
+            0% {
+                opacity : 1;
+            }
+            100% {
+                opacity : 0;
+            }
+        }
+
+    </style>
+
+    <script>
+    export default {
+        onMounted(props, state) {
+            let duration = 5;
+            if (props.duration)
+                duration = props.duration;
+
+            console.log('snackbar', duration);
+
+            setTimeout(() => {
+                this.$("#wrapper").classList.remove("fade-in");
+                this.$("#wrapper").classList.add("fade-out");
+
+                setTimeout(() => {
+                    this.root.dispatchEvent(new Event("close"));
+                }, 0.2 * 1000)
+            }, duration * 1000);
+        }
+    }
+    </script>
+
+</c-snackbar>

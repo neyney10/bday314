@@ -1,0 +1,60 @@
+<c-progress_spinner>
+    <div id="spinner">
+    </div>
+
+    <style type="scss">
+        @use "animation";
+        
+        :host {
+            width: fit-content;
+            height: fit-content;
+            display: block;
+        }
+
+        #spinner {
+            display: block;
+
+            $border-size: 8px;
+            border: solid #f3f3f3 $border-size;
+            border-top: $border-size solid #3498db;
+            border-radius: 50%;
+
+            @include animation.keyframes(spin) {
+                0% {
+                    transform: rotate(0deg);
+                    opacity : 1;
+                }
+                50% {
+                    transform: rotate(180deg);
+                    opacity : 0.5;
+                }
+                100% {
+                    transform: rotate(360deg);
+                    opacity : 1;
+                }
+            }
+            & {
+                @include animation.animate(spin, 2s, linear, infinite);
+            }
+        }
+
+    </style>
+
+    <script>
+        export default {
+            onMounted(props, state) {
+                const spinner = this.$("#spinner");
+                if (props.size)
+                {
+                    spinner.style.width = props.size;
+                    spinner.style.height = props.size;
+                }
+                else 
+                {
+                    spinner.style.width = "50px";
+                    spinner.style.height = "50px";
+                }
+            },
+        };
+    </script>
+</c-progress_spinner>

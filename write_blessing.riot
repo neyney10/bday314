@@ -1,0 +1,81 @@
+<write_blessing>
+  <c_dialog onclose={close}>
+    <template id="dialog-header" slot="header">
+      כתיבת ברכה
+    </template>
+
+    <template slot="body">
+      <div id="body">
+        <input id="userName" placeholder="שמך..."/>
+        <textarea id="userText" placeholder=אחל מזל טוב!"/>
+      </div>
+    </template>
+
+    <template slot="actions">
+      <c_button id="select" onclick={dispatchNewBlessingEvent}>סיום</c_button>
+    </template>
+  </c_dialog>
+
+
+  <!-- style -->
+  <style type="scss">
+    @use "breakpoints";
+
+    :host {
+      direction: rtl;
+      position: fixed;
+    }
+
+    #body {
+      display: flex;
+      flex-direction: column;
+
+      width: 50vw;
+      height: 50vh;
+
+      @media (max-width: breakpoints.$tablet) {
+        width: 90vw;
+        height: 80vh;
+      }
+      
+      #userText, #userName {
+        font-size: 1.5em;
+        background-color: RGBA(255,255,255,0.2);
+        color: black;
+      }
+
+      #userText {
+        height: 100%;
+        resize: block;
+      }
+    }
+
+  </style>
+
+  <script>
+    import c_dialog from './dialog.riot';
+    import c_button from './button.riot';
+
+    export default { 
+        onMounted() {
+        },
+        dispatchNewBlessingEvent(e) {
+          console.log('write_blessing', 'click');
+          e.stopPropagation();
+          this.root.dispatchEvent(new CustomEvent("newBlessing", {detail: {
+            title: this.$('#userName').value,
+            body: this.$('#userText').value
+          }}));
+        },
+        close(e) {
+          e.stopPropagation();
+          this.root.dispatchEvent(new Event("cancel"));
+        },
+        components: {
+          c_dialog,
+          c_button,
+        },
+    }
+  </script>
+</write_blessing>
+

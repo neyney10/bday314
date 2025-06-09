@@ -1,0 +1,442 @@
+<canvas3d>
+  <floating_menu oncolor={changeCakeColor} oncandle={addRandomCandle} oncake={zoomToCake}></floating_menu>
+  <candle_selection if={getStateName() == 'candleSelection'} 
+    onselected={selectedCandle} 
+    onleftType={changeCandleColor}
+    onrightType={changeCandleColor}>
+  </candle_selection>
+  <write_blessing if={getStateName() == 'writeBlessing'} onnewBlessing={addNewBlessing}></write_blessing>
+
+  <div id="canvasWrapper"></div>
+
+  <!-- style -->
+  <style>
+    :host {
+      position: fixed;
+      top: 0;
+      left: 0;
+    }
+  </style>
+
+  <script>
+    import floating_menu from './floating_menu.riot';
+    import candle_selection from './candle_selection.riot';
+    import write_blessing from './write_blessing.riot';
+
+    import * as THREE from 'three';
+    import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+    import CameraControls from 'camera-controls';
+    import { Text as TrText } from 'troika-three-text'
+    import { IntroAnimationClip, ShakeAnimationClip, BlinkAnimationClip } from './temp/intro_animation.js';
+    import { Wish } from './temp/wish.js';
+    import { createActor } from 'xstate';
+    import { menuMachine } from './temp/menu_state_machine.js';
+
+    const menuActor = createActor(menuMachine);
+
+
+
+    // scene camera and renderer
+    const scene = new THREE.Scene();
+    //scene.background = new THREE.Color().setHex( 0xdddddd );
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.set(0, 1, 5);
+
+    const renderer = new THREE.WebGLRenderer({ alpha: true });
+    const width = window.innerWidth;
+    const height = window.innerHeight;
+    renderer.setSize(width, height);
+    renderer.setPixelRatio( window.devicePixelRatio );
+
+
+
+    // light
+    const light1 = new THREE.DirectionalLight(0x00ff00, 2);
+    light1.position.z = 5;
+    scene.add(light1);
+
+    const light2 = new THREE.DirectionalLight(0xff0000, 1);
+    light2.position.z = 5;
+    light2.position.x = 2;
+    scene.add(light2);
+
+    const light3 = new THREE.DirectionalLight(0x0000ff, 3);
+    light3.position.z = 5;
+    light3.position.x = 4;
+    scene.add(light3);
+
+    const light4 = new THREE.DirectionalLight(0xffffff, 2);
+    light4.position.z = -5;
+    light4.position.x = 2;
+    scene.add(light4);
+
+
+    const gridHelper = new THREE.GridHelper(10, 10, 0xff0000, 0x0000ff);
+    scene.add(gridHelper);
+
+    const gridHelper2 = new THREE.GridHelper(10, 10, 0x00ff00, 0x0000ff);
+    gridHelper2.rotateX(Math.PI / 2);
+    scene.add(gridHelper2);
+
+    // import model
+    const loader = new GLTFLoader();
+    let cake = null;
+    const candles = [];
+    let cakeTop = null;
+
+    loader.load('./temp/public/candleless_cake3.glb', function (gltf) {
+        cake = gltf.scene;
+
+        gltf.scene.traverse(function (child) {
+            if (child.isMesh) {
+                let m = child;
+                if (m.name == 'top')
+                    cakeTop = m;
+                m.receiveShadow = true;
+                m.castShadow = true;
+                const original_color = m.material.color.clone();
+                m.onPointerOver = (e) => {  m.material.color.set('hotpink');};
+                m.onPointerOut = (e) => {  m.material.color.set(original_color);};
+                //m.onPointerMove = (e) => { console.log('pointer move'); };
+            }
+            if (child.isLight) {
+                let l = child;
+                l.castShadow = true;
+                l.shadow.bias = -.003;
+                l.shadow.mapSize.width = 64;
+                l.shadow.mapSize.height = 64;
+            }
+        });
+
+        console.log('cakeTop', cakeTop);
+
+        scene.add(gltf.scene);
+
+
+    }, undefined, function (error) {
+
+        console.error(error);
+
+    });
+
+    const animationMixers = {};
+
+
+
+
+    const text = 'מזל טוב ל Niko מאחל הרבה'
+    const cakeTitleText = new TrText();
+    scene.add(cakeTitleText);
+
+    cakeTitleText.text = text;
+    cakeTitleText.font = '/temp/public/fonts/Abraham-Regular.ttf';
+    cakeTitleText.fontSize = 0.3;
+    cakeTitleText.anchorX = "center";
+    cakeTitleText.anchorY = "middle";
+    cakeTitleText.outlineWidth = 0.03;
+    cakeTitleText.color = 0xff5588;
+    cakeTitleText.outlineBlur = "5%";
+    cakeTitleText.position.y = 2;
+    cakeTitleText.sync();
+
+    setTimeout(() => {  
+        const clip = ShakeAnimationClip(cakeTitleText.position, 10, 0.05);
+        const animationMixer = new THREE.AnimationMixer( cakeTitleText );
+        animationMixers['cakeTitle'] = [animationMixer];
+        const clipAction = animationMixer.clipAction( clip );
+        clipAction.play();
+    }, 3500);
+
+
+
+
+
+    // control
+    CameraControls.install( { THREE: THREE } );
+    const controls = new CameraControls(camera, renderer.domElement);
+
+    // events / other
+    const raycaster = new THREE.Raycaster();
+    const mouse = new THREE.Vector2();
+
+    let intersects = [];
+    let hovered = {};
+
+    window.addEventListener('pointermove', (e) => {
+        mouse.set((e.clientX / width) * 2 - 1, -(e.clientY / height) * 2 + 1);
+        raycaster.setFromCamera(mouse, camera);
+        intersects = raycaster.intersectObjects(scene.children, true);
+
+        // If a previously hovered item is not among the hits we must call onPointerOut
+        Object.keys(hovered).forEach((key) => {
+            const hit = intersects.find((hit) => hit.object.uuid === key);
+            if (hit === undefined) {
+                const hoveredItem = hovered[key];
+                if (hoveredItem.object.onPointerOver) hoveredItem.object.onPointerOut(hoveredItem)
+                delete hovered[key];
+            }
+        })
+
+        intersects.forEach((hit) => {
+            // If a hit has not been flagged as hovered we must call onPointerOver
+            if (!hovered[hit.object.uuid]) {
+                hovered[hit.object.uuid] = hit;
+                if (hit.object.onPointerOver) hit.object.onPointerOver(hit)
+            }
+            // Call onPointerMove
+            if (hit.object.onPointerMove) hit.object.onPointerMove(hit)
+        })
+    })
+
+    window.addEventListener('click', (e) => {
+        mouse.set((e.clientX / width) * 2 - 1, -(e.clientY / height) * 2 + 1);
+        raycaster.setFromCamera(mouse, camera);
+        intersects = raycaster.intersectObjects(scene.children, true);
+
+        intersects.forEach((hit) => {
+            if (hit.object.onClick) hit.object.onClick(hit);
+        })
+    })
+
+
+    const clip = IntroAnimationClip([0,1,5], 3);
+    const introAnimationMixer = new THREE.AnimationMixer( camera );
+    animationMixers['intro'] = [introAnimationMixer];
+    const clipAction = introAnimationMixer.clipAction( clip );
+    clipAction.setLoop(THREE.LoopOnce);
+    clipAction.clampWhenFinished = true;
+    clipAction.play();
+
+
+    const particles = 100;
+    for (let i = 0; i < particles; i++)
+    {
+        const geo = new THREE.SphereGeometry(0.025);
+        const mat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+        const particleMesh = new THREE.Mesh(geo, mat);
+        
+        const [x,y,z] = Array(3).fill().map(() => THREE.MathUtils.randFloatSpread(8));
+        particleMesh.position.set(x,y,z);
+
+        scene.add(particleMesh);
+    }
+
+
+    // blessing / wish data
+    const candleBlessingConfig = {
+        candle: {
+            type: '1',
+            colors: ['red', 'blue']
+        },
+        placement: {x:0, y: 0, z: 0},
+        text: ''
+    };
+
+
+
+    // main loop
+    window.addEventListener( 'resize', onWindowResize );
+    function onWindowResize() {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+
+        renderer.setSize( window.innerWidth, window.innerHeight );
+    }
+
+    const clock = new THREE.Clock();
+
+    function animate() {
+        if (cake) {
+            //cake.rotation.y += 0.003;
+        }
+
+        const timeDelta = clock.getDelta();
+        const hasControlsUpdated = controls.update( timeDelta );
+
+        for (const mixers of Object.values(animationMixers))
+        {
+            for (const mixer of mixers)
+                mixer.update(timeDelta);
+        }
+
+
+        renderer.render(scene, camera);
+    }
+    renderer.setAnimationLoop(animate);
+
+
+    export default {  
+      onMounted() {
+        document.querySelector("#canvasWrapper").appendChild(renderer.domElement);
+
+        menuActor.subscribe((newMenuState) => {
+            this.update({menuState: newMenuState});
+            console.log("menu state:", newMenuState.value, this.getStateName()); 
+
+        });
+        menuActor.start();
+      },
+      getStateName() {
+        const value = this.state.menuState?.value;
+        if (!value)
+            return '';
+
+        if (typeof value === 'string')
+            return value;
+
+        return Object.values(this.state.menuState.value)[0];
+      },
+      changeCakeColor() {
+        cake.traverse((child) => {
+          if (child.isMesh) {
+              child.material.color.setRGB(Math.random(), Math.random(), Math.random());
+          }
+        })
+      },
+      changeCandleColor() {
+        const candle = candleBlessingConfig.candle.obj;
+        if (!candle)
+            return;
+        const body = candle.getObjectByName('body');
+        let s1 = body.getObjectByName('Mesh_0');
+        let s2 = body.getObjectByName('Mesh_0_1');
+        console.log(candle, s1, s2);
+        const color1 = new THREE.Color(Math.random(), Math.random(), Math.random());
+        const color2 = new THREE.Color(Math.random(), Math.random(), Math.random());
+        s1.material.color = color1;
+        s2.material.color = color2;
+
+        candleBlessingConfig.candle.colors = [color1, color2];
+      },
+      addRandomCandle() {
+          loader.load('./temp/public/candle2.glb', function (gltf) {
+            const candle = gltf.scene;
+            const [x,y,z] = Array(3).fill().map(() => THREE.MathUtils.randFloatSpread(1));
+            let bbox = new THREE.Box3();
+            bbox.setFromObject(cakeTop, true);
+            candle.position.set(cakeTop.position.x+x, bbox.max.y, cakeTop.position.z+z);
+            candle.parent = cake;
+
+            cake.children.push(candle);
+            candles.push(candle);
+            //scene.add(candle);
+        }, undefined, function (error) {
+            console.error(error);
+        });
+      },
+      zoomToCake() {
+        if (this.getStateName() != 'mainMenu')
+            return;
+
+        menuActor.send({ type: 'candle_and_blessing' });
+
+        loader.load('./temp/public/candle2.glb', function (gltf) {
+            const candle = gltf.scene;
+            candle.position.set(cake.position.x, cake.position.y+0.75, cake.position.z+1);
+            scene.add(candle);
+            candleBlessingConfig.candle.obj = candle;
+            setTimeout(() => {
+                controls.fitToSphere(candle, true );
+                
+            }, 1000);
+            
+            
+            //scene.add(candle);
+        }, undefined, function (error) {
+            console.error(error);
+        });
+
+        
+
+      },
+      selectedCandle() {
+        console.log('selected candle');
+        menuActor.send({ type: 'selected' });
+
+        
+        controls.fitToSphere(cakeTop, true );
+        controls.rotateTo(0, Math.PI / 4, true );
+
+        let bbox = new THREE.Box3();
+        bbox.setFromObject(cakeTop, true);
+        console.log('cakeTop bbox', bbox);
+        // circular shape top
+        const min = bbox.min;
+        const max = bbox.max;
+        let center = new THREE.Vector3();
+        bbox.getCenter(center);
+
+        const radius = new THREE.Vector2((min.x + max.x) / 2, min.z).distanceTo(new THREE.Vector2(center.x, center.z));
+        console.log('circular shape top', center, radius);
+
+        const getPointInCircle = (r, angle) => {
+            return [
+                center.x + r * Math.sin(angle), 
+                center.z + r * Math.cos(angle)
+            ];
+        };
+
+        animationMixers['placements'] = [];
+
+        const candlePlacementOptions = 7;
+        for (let i = 0; i < candlePlacementOptions; i++)
+        {
+            const angle = Math.random() * Math.PI*2; // radians
+            const maxRadius = radius * 0.9;
+            const randRadius = (maxRadius*0.1) + (Math.random() * maxRadius*0.9);
+
+            const [x, z] = getPointInCircle(randRadius, angle);
+            const y = Math.max(min.y, max.y) + 0.01;
+
+            const placementMesh = new THREE.Mesh(
+                new THREE.CircleGeometry(0.05, 12),//new THREE.SphereGeometry(0.04),
+                new THREE.MeshBasicMaterial({transparent: true, opacity: 0.55})
+            );
+
+            const clip = BlinkAnimationClip(1, 0.45, 1);
+            const animationMixer = new THREE.AnimationMixer( placementMesh );
+            animationMixers['placements'].push(animationMixer);
+            const clipAction = animationMixer.clipAction( clip );
+            clipAction.setLoop(THREE.LoopPingPong);
+            clipAction.play();  
+            
+
+            placementMesh.rotation.x = 3*(Math.PI / 2);
+            placementMesh.position.set(x, y, z);
+            placementMesh.name = 'candle_placement';
+            placementMesh.parent = cake;
+            placementMesh.onPointerOver = (e) => { placementMesh.material.color.set('hotpink'); };
+            placementMesh.onPointerOut = (e) => { placementMesh.material.color.set('white'); };
+            placementMesh.onClick = (e) => { 
+                // pos
+                const selected_placement_pos = placementMesh.position;
+                console.log('selected pos:', selected_placement_pos);
+                candleBlessingConfig.placement = selected_placement_pos;
+
+                // remove placements.
+                cake.children = cake.children.filter(c => c.name != 'candle_placement');
+                delete animationMixers['placements'];
+
+                menuActor.send({ type: 'placed' });
+            };
+
+            cake.children.push(placementMesh);
+        }
+      },
+      addNewBlessing(event) {
+        console.log('canvas3d', 'addNewBlessing', event);
+        candleBlessingConfig.text = event.detail;
+        console.log(candleBlessingConfig);
+      },
+      components: {
+        floating_menu,
+        candle_selection,
+        write_blessing,
+      },
+      state: {
+        menuState: ''
+      }
+    }
+  </script>
+</canvas3d>
+

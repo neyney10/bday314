@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+		<title>RiotJS + ViteJS</title>
+		<style>
+			body {
+				margin: 0;
+				background: rgb(238,174,202); 
+				background: radial-gradient(circle, rgba(238,174,202,1) 0%, rgba(148,187,233,1) 100%);
+			}
+		</style>
+	</head>
+
+	<body>
+		<div id="root"></div>
+		<script type="module">
+			/** Load riot.js **/
+			import * as riot from 'riot'
+			import App from './app.riot'
+
+			const mountApp = riot.component(App)
+			mountApp(document.getElementById('root'))
+		</script>
+	</body>
+</html>
