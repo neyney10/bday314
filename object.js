@@ -101,18 +101,13 @@ export class CakeObject extends Bday314Object
                 this.top = child;
 
             if (child.isMesh) {
-                let m = child;
-                //console.log("[debug]", m.name);
-                //m.receiveShadow = true;
-                //m.castShadow = true;
-                //const original_color = m.material.color.clone();
-                //m.onPointerOver = (e) => {  m.material.color.set('hotpink');};
-                //m.onPointerOut = (e) => {  m.material.color.set(original_color);};
-                //m.onPointerMove = (e) => { console.log('pointer move'); };
+                const m = child;
+                m.geometry.computeBoundsTree();
             }
         });
 
         if (!this.top) console.error("'top' wasn't found in the cake", this.obj);
+        
         
 
     }

@@ -3,7 +3,8 @@ import * as THREE from 'three';
 export function intersectPosTop2Bot(objects, origin) {
     const direction = new THREE.Vector3(0, -1, 0);
     const raycaster = new THREE.Raycaster(origin, direction);
-
+    raycaster.firstHitOnly = true;
+    
     const intersects = raycaster.intersectObjects(objects, true);
 
     return intersects;

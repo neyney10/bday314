@@ -1,4 +1,9 @@
 import * as THREE from 'three';
+import { computeBoundsTree, acceleratedRaycast, disposeBoundsTree } from 'three-mesh-bvh';
+THREE.BufferGeometry.prototype.computeBoundsTree = computeBoundsTree;
+THREE.BufferGeometry.prototype.disposeBoundsTree = disposeBoundsTree;
+THREE.Mesh.prototype.raycast = acceleratedRaycast;
+
 import { Text as TrText } from 'troika-three-text';
 import { CakeObject, CandleObject, CandlePlacementObject, Bday314Object, FlameObject, cloneWithMeshes, BalloonObject, BalloonsObject } from './object.js';
 import { Bday314Renderer } from './renderer.js';
@@ -7,6 +12,7 @@ import { randFloat } from 'three/src/math/MathUtils.js';
 import { intersectPosTop2Bot, randomizeMatrix } from './common/threejs_util';
 import { RotateAnimation } from './intro_animation.js';
 import { findPlacements } from './algo.js';
+
 
 
 export class Canvas3dApp 
@@ -233,7 +239,6 @@ export class Canvas3dApp
         const placementPoints = findPlacements(radius, candlePlacementOptions, sphereSize * 2.05, center);
         console.log('placementPoints', placementPoints);
         const cakeIntersectObjs = cake.obj.children.filter(c => !c.name.startsWith('candle'));
-        console.log('candle placements', cakeIntersectObjs);
 
         for (let i = 0; i < candlePlacementOptions; i++)
         {
