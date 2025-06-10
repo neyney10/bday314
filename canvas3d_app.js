@@ -229,15 +229,18 @@ export class Canvas3dApp
 
 
         const sphereSize = 0.05;
-        const candlePlacementOptions = 29
+        const candlePlacementOptions = 7
         const placementPoints = findPlacements(radius, candlePlacementOptions, sphereSize * 2.05, center);
         console.log('placementPoints', placementPoints);
-        ;
+        const cakeIntersectObjs = cake.obj.children.filter(c => !c.name.startsWith('candle'));
+        console.log('candle placements', cakeIntersectObjs);
+
         for (let i = 0; i < candlePlacementOptions; i++)
         {
             const [x, z] = placementPoints[i];
             
-            const intersects = intersectPosTop2Bot([cake.obj], new THREE.Vector3(x, 5, z));
+            
+            const intersects = intersectPosTop2Bot(cakeIntersectObjs, new THREE.Vector3(x, 5, z));
             const y = intersects.map(int => int.point.y).reduce((a, b) => Math.max(a, b), -Infinity) - cake.position.y;
             console.log("placement y", y);
 

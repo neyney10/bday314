@@ -39,6 +39,7 @@ export class Bday314Object
         this.children.push(child);
         this.obj.add(child.obj);
         child.parent = this;
+        child.onCreate();
     }
 
     removeChildByName(name)
@@ -48,6 +49,7 @@ export class Bday314Object
 
         const removedObjNames = [...new Set(removed.map(c => c.obj.name))];
         this.obj.children = this.obj.children.filter(c => !removedObjNames.includes(c.name));
+        // todo: on destroy
 
         return removed;
     }
@@ -58,6 +60,8 @@ export class Bday314Object
         this.obj.children = this.obj.children.filter(c => c.name != child.obj.name);
         if (index != -1)
             return this.children.splice(index);
+
+        // todo: on destroy
     }
 
     childAnimationMixers()
@@ -126,6 +130,8 @@ export class CandleObject extends Bday314Object
     constructor(threeobj, global)
     {
         super(threeobj, global);
+        this.name = 'candle';
+        this.obj.name = 'candle';
         this.colors = [0xFF0000, 0x00FF00];
     }
 
