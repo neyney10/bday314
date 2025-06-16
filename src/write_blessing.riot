@@ -56,16 +56,16 @@
     import c_dialog from './dialog.riot';
     import c_button from './button.riot';
 
+    import { BlessingTextConfig } from '/common/blessing.js';
+
     export default { 
         onMounted() {
         },
         dispatchNewBlessingEvent(e) {
           console.log('write_blessing', 'click');
           e.stopPropagation();
-          this.root.dispatchEvent(new CustomEvent("newBlessing", {detail: {
-            title: this.$('#userName').value,
-            body: this.$('#userText').value
-          }}));
+          const textConfig = new BlessingTextConfig(this.$('#userName').value, this.$('#userText').value)
+          this.root.dispatchEvent(new CustomEvent("newBlessing", {detail: textConfig}));
         },
         close(e) {
           e.stopPropagation();

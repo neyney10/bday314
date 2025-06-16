@@ -344,8 +344,7 @@ export class Canvas3dApp
         {
             candleObj = new Bday314Object(this.models['sparkler.glb'], this.global);
         }
-        if (this.global.candleBlessingConfig.candle)
-            this.global.candleBlessingConfig.candle.obj = candleObj;
+        this.global.candleBlessingConfig.candle.obj = candleObj;
 
 
         const cake = this.global.cakeConfig.obj;
