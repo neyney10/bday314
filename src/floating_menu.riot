@@ -1,7 +1,16 @@
 <floating_menu>
-  <button id="shareDialogBtn" onclick={showShareDialog}>שתף</button>
-  <button id="colorbtn" onclick={(e) => dispatchEventName(e, 'color')}>צבע</button>
-  <button id="cakebtn" onclick={(e) => dispatchEventName(e, 'cake')}>עוגה</button>
+  <c_button id="shareDialogBtn" class="menu-button" onclick={showShareDialog}>
+    <div class="menu-button-content">
+      <i class="fa-solid fa-share"></i>
+      שתף
+      </div> 
+  </c_button>
+  <c_button id="cakebtn" class="menu-button" onclick={(e) => dispatchEventName(e, 'cake')}>
+    <div class="menu-button-content">
+      <i class="fa-solid fa-cake-candles"></i>
+      <span>הוסף נר</span>
+    </div> 
+  </c_button>
 
   <c_dialog if={state.isShareDialogVisible} onclose={hideShareDialog}>
     <div id="dialog-header" slot="header">
@@ -31,10 +40,33 @@
   <!-- style -->
   <style type="scss">
     :host {
-      background-color: transparent;
+      background: transparent;
+
+      height: 60px;
+
       display: flex;
-      flex-direction: column;
+      flex-direction: row;
+      gap: 0.25em;
     }
+    
+
+    .menu-button {
+      box-shadow: 0 4px 30px rgba(0, 0, 0, 0.15);
+      $blur-size: 15px;
+      backdrop-filter: blur($blur-size);
+      -webkit-backdrop-filter: blur($blur-size);
+
+      .menu-button-content {
+        display: flex;
+        flex-direction: column;
+        width: 48px;
+
+        i {
+          font-size: 2em;
+        }
+      }
+    }
+
 
   </style>
 

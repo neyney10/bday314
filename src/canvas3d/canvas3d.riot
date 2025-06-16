@@ -2,9 +2,9 @@
   <div id="canvasWrapper"></div>
 
   <div id="menu" if={getStateName() == 'mainMenu' && state.GState.cake_uuid.get()}>
-    <floating_menu oncolor={changeCakeColor} oncake={zoomToCake}></floating_menu>
+    <floating_menu oncake={zoomToCake}></floating_menu>
   </div>
-  <blessing_list if={getStateName() == 'mainMenu'} items={state.blessings} blessingsObs={state.blessingsObs}></blessing_list>
+  <blessing_list if={getStateName() == 'mainMenu' && state.GState.cake_uuid.get()} items={state.blessings} blessingsObs={state.blessingsObs}></blessing_list>
 
   <div class="description" if={['candleSelection', 'candlePlacement'].includes(getStateName())}>
     <p>{state.description}</p>
@@ -46,35 +46,32 @@
       position: fixed;
       top: 10pt;
       right: 10pt;
-      display: flex;
-      flex-direction: column;
       direction: rtl;
-
     }
 
-      blessing_list {
-        background-color: transparent;
-        position: fixed;
-        right: 0.5em;
-        top: 0.5em;
-        display: block;
-        max-width: 35vw;
-        max-height: 100vh;
-        overflow-y: auto;
+    blessing_list {
+      background-color: transparent;
+      position: fixed;
+      right: 0.5em;
+      top: 80px;
+      display: block;
+      width: 16em;
+      max-width: 35vw;
+      max-height: calc(100vh - 80px);
+      overflow-y: auto;
 
-        @media (max-width: breakpoints.$tablet) {
-          position: relative;
-          right: 0;
-          top: calc(100vh - 10em);
-          width: 98%;
-          max-width: 98%;
-          margin: auto;
-          height: 100%;
-          max-height: none;
-
-        }
+      @media (max-width: breakpoints.$tablet) {
+        position: relative;
+        right: 0;
+        top: calc(100vh - 10em);
+        width: 98%;
+        max-width: 98%;
+        margin: auto;
+        height: 100%;
+        max-height: none;
 
       }
+    }
 
     #canvasWrapper {
       overflow: clip;
@@ -239,14 +236,6 @@
       setCakeTitle(e) {
         const title = e.detail;
         this.state.app.setTitleText(title);
-      },
-      changeCakeColor() {
-        const cake = this.state.app.cakeConfig.obj;
-        cake.obj.traverse((child) => {
-          if (child.isMesh) {
-              child.material.color.setRGB(Math.random(), Math.random(), Math.random());
-          }
-        })
       },
       changeCandleType(e) {
         const candlePos = this.state.app.candleBlessingConfig.candle.obj.position.clone();

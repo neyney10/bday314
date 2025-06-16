@@ -16,6 +16,7 @@
 
 
     <style type="scss">
+        @use "animation";
 
         progress_bar {
             position: relative;
@@ -28,6 +29,13 @@
             flex-direction: column;
             gap: 8px;
             width: 100%;
+            height: 88px;
+            position: relative;
+        }
+        
+        @keyframes slip {
+            0% { bottom: 0; opacity: 0; width: 0%; filter: blur(5px); }
+            100% { bottom: var(--endVal); opacity: 1; }
         }
 
         .layer {
@@ -37,22 +45,39 @@
             height: 12px;
             overflow: clip;
             box-shadow: 5px 3px 5px 1px rgba(0,0,0,0.5);
+
+            position: absolute;
+            left: 50%;
+            transform: translate(-50%,0);
         }
+
 
         .w25 {
             width: 25%;
+            --endVal: 72px;
+            @include animation.animate(slip, 0.4s, ease-in, 1);
+            animation-fill-mode: forwards;
         }
 
         .w50 {
             width: 50%;
+            --endVal: 48px;
+            @include animation.animate(slip, 0.3s, ease-in, 1);
+            animation-fill-mode: forwards;
         }
 
         .w75 {
             width: 75%;
+            --endVal: 24px;
+            @include animation.animate(slip, 0.2s, ease-in, 1);
+            animation-fill-mode: forwards;
         }
 
         .w100 {
             width: 100%;
+            --endVal: 0px;
+            @include animation.animate(slip, 0.1s, ease-in, 1);
+            animation-fill-mode: forwards;
         }
         
     </style>

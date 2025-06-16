@@ -22,8 +22,8 @@ export class Canvas3dApp
         this.scene = new THREE.Scene();
         this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
         this.camera.position.set(0, 1, 1);
-        this.cameraStartTarget = new THREE.Vector3(0, 1, 0);
-        this.cameraStartPosition = new THREE.Vector3(0, 2, 3);
+        this.cameraStartTarget = new THREE.Vector3(0, 1.2, 0);
+        this.cameraStartPosition = new THREE.Vector3(0, 2, 2.2);
         this.world = new Bday314World(this.scene);
         const width = window.innerWidth;
         const height = window.innerHeight;
@@ -418,15 +418,18 @@ export class Canvas3dApp
         {
             const cakeTitleText = new TrText();
 
+            const fontSize = 0.1;
             cakeTitleText.text = text;
             cakeTitleText.font = '/fonts/TrashimCLM-Bold.otf';
-            cakeTitleText.fontSize = 0.3;
+            cakeTitleText.fontSize = fontSize;
             cakeTitleText.anchorX = "center";
             cakeTitleText.anchorY = "middle";
-            cakeTitleText.outlineWidth = 0.03;
+            cakeTitleText.outlineWidth = fontSize/10;
             cakeTitleText.color = 0xff5588;
             cakeTitleText.outlineBlur = "5%";
-            cakeTitleText.position.y = this.global.cakeConfig.obj.top.position.y + 1.25;
+            cakeTitleText.position.y = this.global.cakeConfig.obj.top.position.y + 0.9;
+            cakeTitleText.maxWidth = 1.85;
+            cakeTitleText.textAlign = 'center';
             cakeTitleText.sync();
 
             console.debug('[debug]', "cakeTitleText", cakeTitleText);
