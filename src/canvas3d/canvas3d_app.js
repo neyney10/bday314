@@ -9,7 +9,7 @@ import { CakeObject, CandleObject, CandlePlacementObject, Bday314Object, FlameOb
 import { Bday314Renderer } from './renderer.js';
 import { Bday314World } from './world.js';
 import { randFloat } from 'three/src/math/MathUtils.js';
-import { intersectPosTop2Bot, randomizeMatrix } from './common/threejs_util';
+import { intersectPosTop2Bot, randomizeMatrix } from './threejs_util.js';
 import { RotateAnimation } from './intro_animation.js';
 import { findPlacements } from './algo.js';
 
@@ -243,7 +243,6 @@ export class Canvas3dApp
         for (let i = 0; i < candlePlacementOptions; i++)
         {
             const [x, z] = placementPoints[i];
-            
             
             const intersects = intersectPosTop2Bot(cakeIntersectObjs, new THREE.Vector3(x, 5, z));
             const y = intersects.map(int => int.point.y).reduce((a, b) => Math.max(a, b), -Infinity) - cake.position.y;

@@ -115,21 +115,21 @@
   </style>
 
   <script>
-    import floating_menu from './floating_menu.riot';
-    import candle_selection from './candle_selection.riot';
-    import write_blessing from './write_blessing.riot';
-    import progress_bar from './progress_bar.riot';
-    import blessing_list from './blessing_list.riot';
-    import cake_menu from './cake_menu.riot';
+    import floating_menu from '@/floating_menu.riot';
+    import candle_selection from '@/candle_selection.riot';
+    import write_blessing from '@/write_blessing.riot';
+    import progress_bar from '@/progress_bar.riot';
+    import blessing_list from '@/blessing_list.riot';
+    import cake_menu from '@/cake_menu.riot';
 
     import { Subject } from 'rxjs';
     import { createActor } from 'xstate';
     import * as THREE from 'three';
-    import { menuMachine } from './menu_state_machine.js';
-    import { Canvas3dApp } from './canvas3d_app.js'
-    import { CandleObject, CakeObject, Bday314Object } from './object.js';
-    import * as API from './api.js';
-    import State from './services/state.js';
+    import { menuMachine } from '@/menu_state_machine.js';
+    import { Canvas3dApp } from '@/canvas3d/canvas3d_app.js'
+    import { CandleObject, CakeObject, Bday314Object } from '@/canvas3d/object.js';
+    import * as API from '/services/api.js';
+    import State from '/services/state.js';
 
 
     function cakeModelFromType(type) {

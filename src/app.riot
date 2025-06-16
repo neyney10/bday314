@@ -66,14 +66,14 @@
   </style>
 
   <script>
-    import canvas3d from './canvas3d.riot';
+    import canvas3d from './canvas3d/canvas3d.riot';
     import progress_bar from './progress_bar.riot';
     import progress_cake from './progress_cake.riot';
 
     import { BehaviorSubject } from 'rxjs';
     import { ModelLoader } from './model_loader.js';
     import { preloadFont } from 'troika-three-text';
-    import * as API from './api.js';
+    import * as API from '/services/api.js';
 
 
 

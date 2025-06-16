@@ -4,6 +4,7 @@ import riot from 'rollup-plugin-riot';
 import { registerPreprocessor } from '@riotjs/compiler';
 import * as sass from 'sass';
 
+import path from "path";
 
 registerPreprocessor('css', 'scss', function(code, { options }) {
     //const { file } = options
@@ -18,7 +19,6 @@ registerPreprocessor('css', 'scss', function(code, { options }) {
 /**
  * Vite configuration: https://vitejs.dev/config/
  */
-
 export default defineConfig({
     root: process.cwd(),
     plugins: [riot()],
@@ -26,4 +26,9 @@ export default defineConfig({
         minify: 'esbuild', /** https://vitejs.dev/config/build-options.html#build-minify */
         target: 'esnext' /** https://vitejs.dev/config/build-options.html#build-target */
     },
+    resolve: {
+        alias: {
+            '@': path.resolve(__dirname, './src'),
+        }
+    }
 })

@@ -1,8 +1,7 @@
 import * as THREE from 'three';
 import { randFloat } from 'three/src/math/MathUtils.js';
 
-import { BlinkAnimationClip, MoveAnimation, RotateAnimation } from './intro_animation.js';
-import { randomizeMatrix } from './common/threejs_util.js';
+import { BlinkAnimationClip, MoveAnimation } from './intro_animation.js';
 
 
 export class Bday314Object
