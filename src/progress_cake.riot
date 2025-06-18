@@ -24,6 +24,12 @@
             background: radial-gradient(circle,rgba(63, 94, 251, 1) 0%, rgba(252, 70, 107, 1) 100%);
         }
 
+        .active-progress-bar {
+            #bar {
+                animation: blink 0.75s ease-in-out 0s infinite alternate;
+            }
+        }
+
         #layer-wrapper {
             display: flex;
             flex-direction: column;
@@ -36,6 +42,12 @@
         @keyframes slip {
             0% { bottom: 0; opacity: 0; width: 0%; filter: blur(5px); }
             100% { bottom: var(--endVal); opacity: 1; }
+        }
+
+        @keyframes blink {
+            100% {
+                filter: brightness(150%);
+            }
         }
 
         .layer {
@@ -80,6 +92,10 @@
             animation-fill-mode: forwards;
         }
         
+            
+        
+
+
     </style>
 
     <script>
@@ -90,16 +106,27 @@
 
         export default { 
             onMounted(props, state) {
+                state.activeProgBarDomEls = this.$$('progress_bar');
+
                 props.value.subscribe((v) => {
-                    if (v > 0) state.progVals[0].next(Math.min(100*v / 25, 100));
-                    if (v > 25) state.progVals[1].next(Math.min(100*(v-25) / 25, 100));
-                    if (v > 50) state.progVals[2].next(Math.min(100*(v-50) / 25, 100));
-                    if (v > 75) state.progVals[3].next(Math.min(100*(v-75) / 25, 100));
+                    const progCapacity = 100 / state.activeProgBarDomEls.length;
+                    for (let i = 0; i < state.activeProgBarDomEls.length; i++)
+                    {
+                        if (v > i * progCapacity) 
+                        {
+                            state.progVals[i].next(Math.min(100*(v-(i*progCapacity)) / progCapacity, 100));
+                            if (v <= (i+1) * progCapacity)
+                            {
+                                state.activeProgBarDomEls[state.activeProgBarDomEls.length-1-i].classList.add('active-progress-bar');
+                            }
+                            else
+                            {
+                                state.activeProgBarDomEls[state.activeProgBarDomEls.length-1-i].classList.remove('active-progress-bar');
+                            }
+                        }
+                    }
                 });
 
-                state.layersDomEl = this.$$('.layer');
-            },
-            onUpdated(props, state) {
             },
             components: {
                 progress_bar
@@ -107,6 +134,7 @@
             state: {
                 progVals: [new BehaviorSubject(), new BehaviorSubject(), new BehaviorSubject(), new BehaviorSubject()],
                 layersDomEl: [],
+                activeProgBarDomEls: [],
                 fillColors: [
                     "linear-gradient(90deg,rgba(213, 70, 252, 1) 0%, rgba(252, 70, 107, 1) 100%)",
                     "linear-gradient(90deg,rgba(252, 70, 107, 1) 0%, rgba(252, 70, 237, 1) 100%)",

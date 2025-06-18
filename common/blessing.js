@@ -52,6 +52,6 @@ export class BlessingTextConfig
 
     export()
     {
-        return JSON.stringify(this);
+        return this;
     }
 }

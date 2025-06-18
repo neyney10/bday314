@@ -5,10 +5,18 @@
       שתף
       </div> 
   </c_button>
+
   <c_button id="cakebtn" class="menu-button" onclick={(e) => dispatchEventName(e, 'cake')}>
     <div class="menu-button-content">
       <i class="fa-solid fa-cake-candles"></i>
       <span>הוסף נר</span>
+    </div> 
+  </c_button>
+
+    <c_button id="cakebtn" class="menu-button" onclick={e => window.location.href='/'}>
+    <div class="menu-button-content">
+      <i class="fa-solid fa-star"></i>
+      <span>עוגה חדשה</span>
     </div> 
   </c_button>
 
@@ -59,7 +67,7 @@
       .menu-button-content {
         display: flex;
         flex-direction: column;
-        width: 48px;
+        width: 64px;
 
         i {
           font-size: 2em;

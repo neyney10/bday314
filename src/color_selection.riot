@@ -1,0 +1,172 @@
+<color-selection>
+    <div class="color-preview">
+        <div class="color-top"></div>
+        <div class="color-bottom"></div>
+    </div>
+
+    <div id="wrapper"></div>
+
+    <style type="scss">
+        :host {
+            position: absolute;
+            background: transparent;
+            height: 128px;
+            overflow-y: clip;
+            padding-top: 3em;
+        }
+
+        #wrapper {
+            position: absolute;
+            width: 256px;
+            height: 128px;
+            transform-origin: bottom right;
+            translate: -50%;
+            transition: 0.15s;
+        }
+
+        .color-preview {
+            width: 42px;
+            height: 128px;
+            display: flex;
+            flex-direction: column;
+
+            position: absolute;
+
+            box-shadow: 0 0 8px 1.5px rgba(0,0,0,0.5);
+            border-radius: 4px;
+            overflow: clip;
+            border: 1px solid black;
+            transform-origin: bottom left;
+            transition: 0.05s;
+
+            &:hover {
+                z-index: 1;
+                box-shadow: 0 0 8px 2px rgba(0,0,0,0.9);
+                border-width: 2px;
+            }
+
+            .color-top {
+                background: blue;
+                width: 100%;
+                height: 100%;
+            }
+
+            .color-bottom {
+                background: red;
+                width: 100%;
+                height: 100%;
+            }
+        }
+
+        .active {
+            z-index: 2;
+            box-shadow: 0 0 10px 5px rgba(0,0,0,0.9);
+            scale: 1.2;
+
+            animation: blink 2s linear 0s infinite alternate;
+        }
+
+        @keyframes blink {
+            100% {
+                box-shadow: 0 0 12px 6px black;
+                filter: brightness(150%);
+                border-radius: 8px;
+            }
+        }
+
+    </style>
+
+    <script>
+        import c_button from './button.riot';
+
+        const maxAngle = 180;
+
+
+        export default {
+            onMounted() {
+                const cPreElem = this.$('.color-preview');
+                const wrapperElem = this.$('#wrapper');
+                this.root.removeChild(cPreElem);
+                console.log('color_selection', cPreElem);
+                const count = (maxAngle*2)/15;
+                for (let i = 0; i < count; i++)
+                {
+                    let newCPreElem = cPreElem.cloneNode(true);
+                    newCPreElem = this.setupColorPreview(newCPreElem, i);
+                    wrapperElem.appendChild(newCPreElem);
+                }
+                
+            },
+            setupColorPreview(cPreElem, i) {
+                const d = i * 15 - maxAngle;
+                cPreElem.style.transform += `rotate(${d}deg)`;
+
+                const r = 16;    // radius
+                const top = r * Math.sin((d/90) * (Math.PI/180));
+                cPreElem.style.top = `${top}em`;
+
+                const left = r * Math.cos((d/90) * (Math.PI/180));
+                cPreElem.style.left = `${left}em`;
+
+                cPreElem.getElementsByClassName('color-top')[0].style.background = this.randomColor();
+                cPreElem.getElementsByClassName('color-bottom')[0].style.background = this.randomColor();
+
+                cPreElem.addEventListener("click", (e) => this.focusColorPreview(i));
+
+                return cPreElem;
+            },
+            randomColor() {
+                const letters = '0123456789ABCDEF';
+                let color = '#';
+                for (let i = 0; i < 6; i++) {
+                    color += letters[Math.floor(Math.random() * 16)];
+                }
+                return color;
+            },
+            focusColorPreview(i) {
+                // rotate animation;
+                const d = i * 15 - maxAngle;
+                this.$('#wrapper').style.transform = `rotate(${-d}deg)`;
+
+                if (this.state.activeElem)
+                {
+                    this.state.activeElem.classList.remove('active');
+                }
+
+                this.state.activeElem = this.$$('.color-preview')[i]; // todo: cache
+                this.state.activeElem.classList.add('active');
+
+                const colors = [
+                    this.state.activeElem.getElementsByClassName('color-top')[0].style.background,
+                    this.state.activeElem.getElementsByClassName('color-bottom')[0].style.background
+                ].map(c => this.rgbStrToHex(c));
+
+                console.log('focusColorPrewview', colors);
+                this.dispatchEventColorSelected(colors);
+            },
+            dispatchEventColorSelected(colors) {
+                this.root.dispatchEvent(new CustomEvent(`colorSelected`, {detail: colors}));
+            },
+            rgbStrToHex(rgbStr) {
+                let m = rgbStr.match(/^rgb\s*\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\)$/i);
+                m = [m[1], m[2], m[3]];
+                m = m.map(c => Number(c).toString(16).toUpperCase());
+                m = m.map(c => {
+                    if (c.length == 1)
+                        return '0' + c;
+                    else return c;
+                }) // pad
+
+                m = Number('0x' + m.join(''));
+                return m;
+            },
+            components: {
+                c_button
+            },
+            state: {
+                activeElem: undefined
+            }
+        }
+    </script>
+
+</color-selection>

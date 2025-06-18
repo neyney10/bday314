@@ -4,7 +4,7 @@
   <div id="menu" if={getStateName() == 'mainMenu' && state.GState.cake_uuid.get()}>
     <floating_menu oncake={zoomToCake}></floating_menu>
   </div>
-  <blessing_list if={getStateName() == 'mainMenu' && state.GState.cake_uuid.get()} items={state.blessings} blessingsObs={state.blessingsObs}></blessing_list>
+  <blessing_list if={getStateName() == 'mainMenu' && state.GState.cake_uuid.get() && state.blessings.getArr().length > 0} items={state.blessings}></blessing_list>
 
   <div class="description" if={['candleSelection', 'candlePlacement'].includes(getStateName())}>
     <p>{state.description}</p>
@@ -40,7 +40,7 @@
       left: 0;
       width: 100%;
     }
-
+    
     #menu {
       z-index: 1;
       position: fixed;
@@ -118,6 +118,7 @@
     import progress_bar from '@/progress_bar.riot';
     import blessing_list from '@/blessing_list.riot';
     import cake_menu from '@/cake_menu.riot';
+    import color_selection from '@/color_selection.riot';
 
     import { Subject } from 'rxjs';
     import { createActor } from 'xstate';
@@ -126,6 +127,7 @@
     import { Canvas3dApp } from '@/canvas3d/canvas3d_app.js'
     import { CandleObject, CakeObject, Bday314Object } from '@/canvas3d/object.js';
     import { BlessingConfig, CandleConfig } from '/common/blessing.js';
+    import { ObservableArray } from '/common/observables.js';
     import * as API from '/services/api.js';
     import State from '/services/state.js';
 
@@ -193,11 +195,10 @@
           if (cakeIdFromUrl.split('-').length > 1)
             State.admin_pin.set(cakeIdFromUrl.split('-')[1]);
 
-          this.state.blessings = cakeData.blessings.map(b => b.text);
+          this.state.blessings.setArr(cakeData.blessings.map(b => b.text));
 
           for (const b of cakeData.blessings)
           {
-            this.state.blessingsObs.next(b.text);
             this.state.app.addCandle(b.candle);
           }
 
@@ -307,7 +308,6 @@
 
         API.addBlessing(cakeId, this.state.app.candleBlessingConfig.export());
         this.state.blessings.push(this.state.app.candleBlessingConfig.text);
-        this.state.blessingsObs.next(this.state.app.candleBlessingConfig.text);
 
         this.state.app.controls.setTarget(
           this.state.app.cameraStartTarget.x,
@@ -354,13 +354,13 @@
         write_blessing,
         progress_bar,
         blessing_list,
-        cake_menu
+        cake_menu,
+        color_selection
       },
       state: {
         menuState: '',
         menuActor: createActor(menuMachine),
-        blessingsObs: new Subject(),
-        blessings: [],
+        blessings: new ObservableArray(),
         GState: State,
         description: ''
       }

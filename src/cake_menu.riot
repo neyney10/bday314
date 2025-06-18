@@ -1,6 +1,6 @@
 <cake_menu>
     <div id="wrapper">
-        <stepper steps={3}>
+        <stepper steps={3} stepChangeObserver={state.stepChangeObserver}>
             <template slot="step1">
                 <div class="horizontal-line"></div>
                 <div id="decorations">
@@ -34,22 +34,21 @@
                     </c_button>
                     <c_button class={state.selectedCakeType == 'penguin' ? 'selected' : null} onclick={e => selectCake('penguin')}>פנגווין</c_button>
                 </div>
+
+                <c_button class="stepper-next-button" onclick={e => stepperNext(1)}>המשך</c_button>
             </template>
 
             <template slot="step2">
-                <input id="cakeTitle" placeholder="מזל טוב!" onkeypress={onCakeTitleEdit} value={state.cakeTitle}>
+                <div id="cakeTitleWrapper">
+                    <span>כותרת</span>
+                    <input id="cakeTitle" placeholder="מזל טוב!" oninput={onCakeTitleEdit} value={state.cakeTitle}>
+                </div>
+                <c_button class="stepper-next-button" onclick={e => stepperNext(2)}>המשך</c_button>
             </template>
 
             <template slot="step3">
-                <c_button onclick={(e) => createCake()} if={!state.created}>צור עוגה!</c_button>
-                <template if={state.created}>
-                    הזמן חברים להניח נר ולברך באמצעות הקישור הבא:
-                    http://www.bday314.co.il/cake/<uuid>
-                    שמור את הקישור הזה על מנת לחזור לנהל את העוגה שלך
-                    http://www.bday314.co.il/cake/<uuid>-<pin_code>
-
-                </template>
-
+                <c_button onclick={(e) => createCake()} if={!state.created && !state.cakeCreationInProgress}>צור עוגה!</c_button>
+                <spinner size="1.2em" if={state.cakeCreationInProgress}></spinner>
             </template>
         </stepper>
         
@@ -84,7 +83,23 @@
                 width: 90%;
                 background: transparent;
                 backdrop-filter: none;
+                height: 80vh;
             }
+        }
+
+        stepper {
+            height: 100%;
+            position: relative;
+        }
+
+        .stepper-next-button {
+            width: 100%;
+            font-size: 1.5em;
+            height: fit-content;
+            display: block;
+
+            position: absolute;
+            bottom: 0;
         }
 
         #wrapper {
@@ -92,7 +107,6 @@
             display: flex;
             flex-direction: column;
         }
-
 
         #decorations {
             display: flex;
@@ -147,7 +161,7 @@
 
         .horizontal-line {
             height: 1px;
-            border: solid black 1px;
+            border: solid black 2px;
             width: 95%;
             margin-top: 0.5em;
             margin-bottom: 0.5em;
@@ -155,17 +169,47 @@
             margin-right: auto;
         }
 
+        #cakeTitleWrapper {
+            margin: auto;
+            width: fit-content;
+            display: flex;
+            flex-direction: column;
+
+            #cakeTitle {
+                background-color: RGBA(255,255,255,0.2);
+                color: black;
+                padding: 0.25em;
+                $blur-size: 7px;
+                backdrop-filter: blur($blur-size);
+                -webkit-backdrop-filter: blur($blur-size);
+                border-radius: 4px;
+
+                &:focus {
+                    border: 2px double blue;
+                    box-shadow: 0 0 15px rgba(0,0,0,0.5);
+                    background-color: RGBA(255,255,255,0.5);
+                }
+            }
+        }
+
+
+
     </style>
 
     <script>
-        import stepper from './stepper.riot';
+        import stepper from './cake_config_stepper.riot';
         import c_button from './button.riot';
+        import spinner from './progress_spinner.riot';
         
         import * as API from '/services/api.js';
         import State from '/services/state.js';
 
+        import { Subject } from 'rxjs';
+
         export default {
             async createCake() {
+                this.update({cakeCreationInProgress: true});
+
                 const cakeData = {
                     type: this.state.selectedCakeType,
                     decoration: {
@@ -203,30 +247,24 @@
                 this.root.dispatchEvent(new CustomEvent(name, {detail: value}));
             },
             onCakeTitleEdit(e) {
-                e = e || window.event;
-                const charCode = e.keyCode || e.which;
-                if (charCode == 13) {
-                    // Suppress default action of the keypress
-                    if (e.preventDefault) {
-                        e.preventDefault();
-                    }
-                    e.returnValue = false;
-                }
-
-                console.log(e);
-
-                this.state.cakeTitle = e.target.value + e.key;
+                this.state.cakeTitle = e.target.value;
                 this.dispatchCustomEvent('titleChanged', this.state.cakeTitle);
+            },
+            stepperNext(step) {
+                this.state.stepChangeObserver.next(step);
             },
             components: {
                 stepper,
-                c_button
+                c_button,
+                spinner
             },
             state: {
                 created: false,
                 cakeTitle: "",
                 selectedDecoration: "snow",
                 selectedCakeType: "layers",
+                cakeCreationInProgress: false,
+                stepChangeObserver: new Subject()
             }
         }
     </script>

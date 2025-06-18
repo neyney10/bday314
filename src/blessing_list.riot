@@ -91,17 +91,11 @@
             onMounted(props, state) {
                 if (props.items)
                 {
-                    this.update({items: [...props.items]});
-                    console.log("blessing_list.onMounted", props.items);
-                }
-
-                if (props.blessingsObs)
-                {
-                    props.blessingsObs.subscribe({
-                        next: b => this.update({items: [...this.state.items, b]})
+                    props.items.sub(e => {
+                        if (!e) return;
+                        this.update({items: e.arr})
                     });
                 }
-
                 State.admin_pin.sub(val => this.update({GState: State}));
             },
             async removeBlessing(index) {

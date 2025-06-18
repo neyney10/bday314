@@ -1,0 +1,176 @@
+<cake_config_stepper>
+    <div id="chain">
+        <div class="step-head" onclick={(e) => setCurrent(0)}>
+            <div class="step-num"><i class="fa-solid fa-cake-candles"></i></div>
+            <div class="step-name">עוגה</div>
+        </div>
+
+        <template if={props.steps >= 2}>
+            <div class="vertical-line-arrow"></div>
+
+            <div class="step-head" onclick={(e) => setCurrent(1)}>
+                <div class="step-num"><i class="fa-solid fa-pencil"></i></div>
+                <div class="step-name">כיתוב</div>
+            </div>
+        </template>
+
+        <template if={props.steps >= 3}>
+            <div class="vertical-line-arrow hide-line"></div>
+
+            <div class="step-head" onclick={(e) => setCurrent(2)}>
+                <div class="step-num"><i class="fa-solid fa-check"></i></div>
+                <div class="step-name">שיתוף</div>
+            </div>
+        </template>
+
+
+
+    </div>
+
+    <template if={state.step == 0}>
+        <slot name="step1"/>
+    </template>
+    
+    <template if={state.step == 1}>
+        <slot name="step2"/>
+    </template>
+
+    <template if={state.step == 2}>
+        <slot name="step3"/>
+    </template>
+
+    <style type="scss">
+        #chain {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            width: 100%;
+            margin: auto;
+
+            .step-head {
+                display: flex;
+                flex-direction: row;
+                align-items: center;
+
+                &:hover {
+                    cursor: pointer;
+                }
+
+                .step-num {
+                    width: 1.75em;
+                    height: 1.75em;
+                    line-height: 1.75em;
+                    text-align: center;
+                    border-radius: 50%;
+                    border: 1px black double;
+                    background: gray;
+                    margin-left: 0.25em;
+                }
+            }
+
+            .current {
+                .step-num {
+                    background: blue;
+                    background: linear-gradient(45deg,rgba(131, 58, 180, 0.5) 0%, rgba(89, 29, 253, 0.5) 50%, rgba(69, 124, 252, 0.5) 100%);
+                    border-width: 3px;
+                }
+
+                .step-name {
+                    font-weight: bold;
+                    font-size: 1.25em;
+                }
+            }
+
+            .completed {
+                .step-num {
+                    background: green;
+                    background: linear-gradient(45deg,rgba(152, 180, 58, 0.5) 0%, rgba(29, 253, 104, 0.5) 50%, rgba(69, 170, 252, 0.5) 100%);
+                }
+            }
+
+            .vertical-line-arrow {
+                border: 2px solid RGB(128,128,128);
+                border-radius: 25%;
+                margin-left: 0.25em;
+                margin-right: 0.25em;
+                height: 0px;
+                width: 100%;
+
+                transition: all 0.5s ease-in-out;
+            }
+
+            
+            .hide-line {
+                width: 0;
+                border: 0;
+            }
+
+            .filled-line {
+                border-color: blue;
+                width: 0;
+                border: 0;
+                border-left: 3px dashed gray;
+                border-style: solid;
+                height: 20px;
+                ;
+            }
+        }
+
+
+    </style>
+
+    <script>
+        export default {
+            onMounted(props, state) {
+                this.$$('.step-head')[this.state.step].classList.add("current");
+                state.steps = this.$$('.step-head');
+                state.lines = this.$$('.vertical-line-arrow');
+
+                if (props.stepChangeObserver)
+                {
+                    state.stepChangeObserver = props.stepChangeObserver;
+                    state.stepChangeObserver.subscribe({
+                        next: step => this.setCurrent(step)
+                    });
+                }
+
+            },
+            setCurrent(current) {
+                const steps = this.state.steps;
+                const lines = this.state.lines;
+
+                steps[this.state.step].classList.remove("current");
+                for (let i = current; i <= this.state.step; i++)
+                {
+                    steps[i].classList.remove('completed');
+                    if (i > 0)
+                    {
+                        lines[i-1].classList.remove('filled-line');
+                    }
+                }
+
+                this.update({step: current});
+
+                steps[this.state.step].classList.add("current");
+
+                for (let i = this.state.step; i < lines.length; i++)
+                {
+                    lines[i].classList.add('hide-line');
+                }
+
+                if (this.state.step < lines.length)
+                    lines[this.state.step].classList.remove('hide-line');
+
+                for (let i = 0; i < this.state.step; i++)
+                {
+                    steps[i].classList.add('completed');
+                    
+                    lines[i].classList.add('filled-line');
+                }
+            },
+            state: {
+                step: 0,
+            }
+        }
+    </script>
+</cake_config_stepper>
