@@ -1,6 +1,12 @@
-const API_URL = 'https://bday314srv.neyney10.workers.dev'; //'http://127.0.0.1:8787';// //'http://192.168.1.112:3000';//'http://localhost:3000';
+const API_URL = import.meta.env.VITE_API_URL;
+//'https://bday314srv.neyney10.workers.dev'; //'http://127.0.0.1:8787';// //'http://192.168.1.112:3000';//'http://localhost:3000';
 
 export async function getCake(id) {
+    if (!id)
+    {
+        return null;
+    }
+    
     const url = API_URL + `/cake/${id}`;
     let res;
     try {

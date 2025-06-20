@@ -196,7 +196,7 @@
 
         this.state.zoomedToCandle.sub((v) => {
           if (!v)
-            this.zoomOutOfCandle();
+            this.zoomOutOfCandle(this.getStateName() == 'mainMenu');
         });
 
         this.state.candleTypes = [
@@ -372,31 +372,33 @@
           {
             subscription.unsubscribe();
             this.state.zoomedToCandle.set(false);
-            for (const c of otherCandles)
-              c.setOpacity(1);
           }
         });
         
         window.scrollTo({ top: 0, behavior: 'smooth' });
         this.state.zoomedToCandle.set(true);
       },
-      zoomOutOfCandle() {
+      zoomOutOfCandle(zoomOut=true) {
         const cake = this.state.app.cakeConfig.obj;
         for (const c of cake.children)
           c.setOpacity(1);
+          
+        if (zoomOut)
+        {
+          this.state.app.controls.setTarget(
+            this.state.app.cameraStartTarget.x,
+            this.state.app.cameraStartTarget.y,
+            this.state.app.cameraStartTarget.z,
+            true
+          );
+          this.state.app.controls.setPosition(
+            this.state.app.cameraStartPosition.x,
+            this.state.app.cameraStartPosition.y,
+            this.state.app.cameraStartPosition.z,
+            true
+          );
+        }
 
-        this.state.app.controls.setTarget(
-          this.state.app.cameraStartTarget.x,
-          this.state.app.cameraStartTarget.y,
-          this.state.app.cameraStartTarget.z,
-          true
-        );
-        this.state.app.controls.setPosition(
-          this.state.app.cameraStartPosition.x,
-          this.state.app.cameraStartPosition.y,
-          this.state.app.cameraStartPosition.z,
-          true
-        );
       },
       selectedCandle(e) {
         const candleData = e.detail;
