@@ -85,6 +85,19 @@ export class ObservableArray
         return this.arr;
     }
 
+    remove(i)
+    {
+        const val = this.arr[i];
+        this.arr.splice(i, 1);
+        this.subject.next(
+            new ArrayChangeEvent(
+                this.arr,
+                [],
+                [val]
+            )
+        );
+    }
+
     sub(action)
     {
         return this.subject.subscribe({

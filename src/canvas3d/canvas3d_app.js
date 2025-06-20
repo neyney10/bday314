@@ -331,7 +331,7 @@ export class Canvas3dApp
 
     }
 
-    addCandle(candleData)
+    addCandle(candleData, blessing_id)
     {
         console.debug('[debug]', 'addCandle', 'candleData', candleData);
         let candleObj;
@@ -342,18 +342,19 @@ export class Canvas3dApp
         }
         else if (candleData.type == 'sparkler')
         {
-            candleObj = new Bday314Object(this.models['sparkler.glb'], this.global);
+            candleObj = new Bday314Object(this.models['sparkler.glb'], this.global, true, 'candle');
         }
         this.global.candleBlessingConfig.candle.obj = candleObj;
-
 
         const cake = this.global.cakeConfig.obj;
         const pos = candleData.pos;
         candleObj.position.set(cake.top.position.x+pos.x, pos.y ,cake.top.position.z+pos.z);
         candleObj.obj.parent = cake.obj;
+        if (blessing_id)
+            candleObj.obj.userData.blessing_id = blessing_id;
         console.log('candleObj', candleObj, pos);
 
-        cake.obj.children.push(candleObj.obj);
+        cake.addChild(candleObj);
     }
 
 

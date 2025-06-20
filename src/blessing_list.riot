@@ -12,6 +12,11 @@
                 </p>
             </div>
 
+            <c_button id="select-blessing" onclick={e => notifyItemClick(index)}>
+                <i class="fa-solid fa-eye"></i>
+                הראה נר
+            </c_button>
+
             <spinner size="1.2em" if={state.inProgress.includes(index)}></spinner>
         </div>
     </div>
@@ -21,7 +26,7 @@
         #list {
             display: flex;
             flex-direction: column;
-            background: radial-gradient(circle,rgba(63, 94, 251, 0.3) 0%, rgba(213, 70, 252, 0.3) 100%);
+            background: radial-gradient(circle,rgba(63, 94, 251, 0.2) 0%, rgba(213, 70, 252, 0.2) 100%);
             box-shadow: 0 4px 30px rgba(0, 0, 0, 0.15);
             $blur-size: 15px;
             backdrop-filter: blur($blur-size);
@@ -42,6 +47,7 @@
                 font-family: Varela;
                 overflow-wrap: break-word;
                 direction: rtl;
+                overflow: clip;
 
 
                 .title {
@@ -68,6 +74,11 @@
                     p {
                         margin: 0;
                     }
+                }
+
+                #select-blessing {
+                    position: relative;
+                    bottom: -0.5em;
                 }
 
                 spinner {
@@ -99,20 +110,27 @@
                 State.admin_pin.sub(val => this.update({GState: State}));
             },
             async removeBlessing(index) {
-                console.log('removing blessing...', index, State);
+                const blessing_id = this.state.items[index].blessing_id;
+                console.log('removing blessing...', index, blessing_id, State);
                 this.update({inProgress: [...this.state.inProgress, index]});
-                if (await API.removeBlessing(State.cake_uuid.get(), State.admin_pin.get(), index))
+                
+                if (await API.removeBlessing(State.cake_uuid.get(), State.admin_pin.get(), blessing_id))
                 {
                     const remIdx = this.state.inProgress.indexOf(index);
                     this.state.inProgress.splice(remIdx, 1);
 
-                    this.state.items.splice(index, 1);
+                    this.props.items.remove(index);
 
                     this.update({
                         inProgress: this.state.inProgress,
-                        items: this.state.items
                     })
+
+                    // removal is handled via the ObservableArray, no need to emit a component type event.
                 }
+            },
+            notifyItemClick(index) {
+                const blessing_id = this.state.items[index].blessing_id;
+                this.root.dispatchEvent(new CustomEvent('itemClick', {detail: blessing_id}));
             },
             components: {
                 spinner,

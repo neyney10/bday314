@@ -6,7 +6,7 @@ import { BlinkAnimationClip, MoveAnimation } from './intro_animation.js';
 
 export class Bday314Object
 {
-    constructor(threeObj, global, clone=true)
+    constructor(threeObj, global, clone=true, name=undefined)
     {
         if (clone)
         {
@@ -15,7 +15,10 @@ export class Bday314Object
         else this.obj = threeObj;
 
         this.obj.userData = {meta: this};
-        this.name = this.obj.name;
+        this.uuid = this.obj.uuid;
+        if (name)
+            this.name = name;
+        else this.name = this.obj.name;
         this.position = this.obj.position;
         this.rotation = this.obj.rotation;
         this.animationMixer = new THREE.AnimationMixer(this.obj);
@@ -55,11 +58,15 @@ export class Bday314Object
 
     removeChild(child)
     {
-        const index = this.children.indexOf(child);
-        this.obj.children = this.obj.children.filter(c => c.name != child.obj.name);
+        // remove by id
+        let index = this.children.findIndex(c => c.uuid == child.uuid);
+        let removedChild;
         if (index != -1)
-            return this.children.splice(index);
+            removedChild = this.children.splice(index,1);
 
+        this.obj.remove(child.obj);
+
+        return removedChild;
         // todo: on destroy
     }
 
@@ -83,6 +90,16 @@ export class Bday314Object
     onDestroy()
     {
         this.animationMixer.stopAllAction();
+    }
+
+    setOpacity(value)
+    {
+        this.obj.traverse(object => {
+            if (object.isMesh) {
+                object.material.opacity = value;
+                object.material.transparent = true;
+            }
+        });
     }
 }
 
@@ -327,6 +344,7 @@ export class BalloonsObject extends Bday314Object
 
 export function cloneWithMeshes(threeObj) {
     const obj = threeObj.clone(true);
+    obj.uuid = THREE.MathUtils.generateUUID();
     obj.traverse(object => {
         if ( object.isMesh ) {
             object.material = object.material.clone();

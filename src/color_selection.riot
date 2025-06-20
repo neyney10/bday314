@@ -83,7 +83,7 @@
 
 
         export default {
-            onMounted() {
+            onMounted(props,state) {
                 const cPreElem = this.$('.color-preview');
                 const wrapperElem = this.$('#wrapper');
                 this.root.removeChild(cPreElem);
@@ -95,6 +95,8 @@
                     newCPreElem = this.setupColorPreview(newCPreElem, i);
                     wrapperElem.appendChild(newCPreElem);
                 }
+
+                state.colorPreviewEls = this.$$('.color-preview');
                 
             },
             setupColorPreview(cPreElem, i) {
@@ -108,20 +110,18 @@
                 const left = r * Math.cos((d/90) * (Math.PI/180));
                 cPreElem.style.left = `${left}em`;
 
-                cPreElem.getElementsByClassName('color-top')[0].style.background = this.randomColor();
-                cPreElem.getElementsByClassName('color-bottom')[0].style.background = this.randomColor();
+                cPreElem.getElementsByClassName('color-top')[0].style.background = this.randomHSLColor([50,100], [50,95]);
+                cPreElem.getElementsByClassName('color-bottom')[0].style.background = this.randomHSLColor([40,100], [20,70]);
 
                 cPreElem.addEventListener("click", (e) => this.focusColorPreview(i));
 
                 return cPreElem;
             },
-            randomColor() {
-                const letters = '0123456789ABCDEF';
-                let color = '#';
-                for (let i = 0; i < 6; i++) {
-                    color += letters[Math.floor(Math.random() * 16)];
-                }
-                return color;
+            randomHSLColor(sRange=[0,100], lRange=[0,100]) {
+                const H = Math.floor(Math.random() * 360);
+                const S = sRange[0] + Math.floor(Math.random() * (sRange[1] - sRange[0]));
+                const L = lRange[0] + Math.floor(Math.random() * (lRange[1] - lRange[0]));
+                return `hsl(${H}, ${S}%, ${L}%)`;
             },
             focusColorPreview(i) {
                 // rotate animation;
@@ -133,7 +133,7 @@
                     this.state.activeElem.classList.remove('active');
                 }
 
-                this.state.activeElem = this.$$('.color-preview')[i]; // todo: cache
+                this.state.activeElem = this.state.colorPreviewEls[i];
                 this.state.activeElem.classList.add('active');
 
                 const colors = [
@@ -164,7 +164,8 @@
                 c_button
             },
             state: {
-                activeElem: undefined
+                activeElem: undefined,
+                colorPreviewEls: []
             }
         }
     </script>

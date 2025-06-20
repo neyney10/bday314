@@ -23,7 +23,6 @@
             onMounted(props) {
                 props.value.subscribe((v) => {this.update({value: v})});
                 const bar = this.$('#bar');
-                console.log('fillColor', props.fillColor)
                 bar.style.background = props.fillColor;
                 bar.style.width = this.state.value + "%";
             },

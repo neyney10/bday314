@@ -25,11 +25,11 @@ export class Bday314World
         console.debug('[debug]', 'world:remove', obj);
         obj.onDestroy();
         // remove from scene.
-        if (obj.parent) // todo
+        if (obj.parent)
         {
-            obj.parent.remove(obj);
+            obj.parent.removeChild(obj);
         }
-        else if (obj.obj.parent) // temp - this should be handled by the higher-level obj.parent.remove
+        else if (obj.obj.parent) // temp - in case of non-Bday314 object
         {
             obj.obj.parent.remove(obj.obj);
         }

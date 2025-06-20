@@ -5,6 +5,7 @@ export class BlessingConfig
     {
         this.candle = new CandleConfig();
         this.text = new BlessingTextConfig();
+        this.uuid = undefined;
     }
 
     export()
@@ -52,6 +53,9 @@ export class BlessingTextConfig
 
     export()
     {
-        return this;
+        return {
+            title: this.title,
+            body: this.body
+        };
     }
 }

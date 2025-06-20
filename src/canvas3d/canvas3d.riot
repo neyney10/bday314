@@ -2,9 +2,12 @@
   <div id="canvasWrapper"></div>
 
   <div id="menu" if={getStateName() == 'mainMenu' && state.GState.cake_uuid.get()}>
-    <floating_menu oncake={zoomToCake}></floating_menu>
+    <floating_menu oncake={zoomToCake} zoomedToCandle={state.zoomedToCandle}></floating_menu>
   </div>
-  <blessing_list if={getStateName() == 'mainMenu' && state.GState.cake_uuid.get() && state.blessings.getArr().length > 0} items={state.blessings}></blessing_list>
+  <blessing_list if={getStateName() == 'mainMenu' && state.GState.cake_uuid.get() && state.blessings.getArr().length > 0} 
+    items={state.blessings}
+    onitemClick={zoomToCandle}>
+  </blessing_list>
 
   <div class="description" if={['candleSelection', 'candlePlacement'].includes(getStateName())}>
     <p>{state.description}</p>
@@ -28,7 +31,10 @@
   </candle_selection>
   <write_blessing if={getStateName() == 'writeBlessing'} onnewBlessing={addNewBlessing} oncancel={cancelBlessing}></write_blessing>
 
-
+  <div id="spinner" if={state.blessingCreationInProgress}>
+    <spinner size="12em" ></spinner>
+  </div>
+  
   
   <!-- style -->
   <style type="scss">
@@ -39,6 +45,25 @@
       top: 0;
       left: 0;
       width: 100%;
+    }
+
+    #spinner {
+      position: fixed;
+      background: rgba(255,255,255,0.5);
+      $blur-size: 7px;
+      backdrop-filter: blur($blur-size);
+      -webkit-backdrop-filter: blur($blur-size);
+      width: 100%;
+      height: 100%;
+      spinner {
+        position: fixed;
+        left: 50%;
+        top: 50%;
+        translate: -50% -50%;
+        box-shadow: 0 0 15px 5px rgba(0,0,0,0.5);
+        border-radius: 50%;
+
+      }
     }
     
     #menu {
@@ -55,8 +80,8 @@
       right: 0.5em;
       top: 80px;
       display: block;
-      width: 16em;
-      max-width: 35vw;
+      min-width: 16em;
+      max-width: 33vw;
       max-height: calc(100vh - 80px);
       overflow-y: auto;
 
@@ -119,6 +144,8 @@
     import blessing_list from '@/blessing_list.riot';
     import cake_menu from '@/cake_menu.riot';
     import color_selection from '@/color_selection.riot';
+    import spinner from '@/progress_spinner.riot';
+    import c_button from '@/button.riot';
 
     import { Subject } from 'rxjs';
     import { createActor } from 'xstate';
@@ -127,7 +154,7 @@
     import { Canvas3dApp } from '@/canvas3d/canvas3d_app.js'
     import { CandleObject, CakeObject, Bday314Object } from '@/canvas3d/object.js';
     import { BlessingConfig, CandleConfig } from '/common/blessing.js';
-    import { ObservableArray } from '/common/observables.js';
+    import { ObservableArray, ObservableValue } from '/common/observables.js';
     import * as API from '/services/api.js';
     import State from '/services/state.js';
 
@@ -167,12 +194,35 @@
         });
         this.state.menuActor.start();
 
+        this.state.zoomedToCandle.sub((v) => {
+          if (!v)
+            this.zoomOutOfCandle();
+        });
+
         this.state.candleTypes = [
           { name: 'bicolor', model: props.models['candle2.glb'], option1: "color", option2: "color" },
           { name: 'sparkler', model: props.models['sparkler.glb'] }
         ];
 
         State.cake_uuid.sub(uuid => this.update({GState: State}));
+        this.state.blessings.sub(e => {
+          if (!e) return;
+          if (e.removed.length > 0)
+          {
+            // remove candle as well.
+            console.debug('[debug]', 'blessing obs on rem', e.removed);
+            const rem = e.removed[0];
+            const blessing_id = rem.blessing_id;
+            const candleToRem = this.state.app.cakeConfig.obj.children
+              .filter(c => c.name == 'candle')
+              .find(c => c.obj.userData.blessing_id == blessing_id);
+
+            if (candleToRem)
+            {
+              this.state.app.world.remove(candleToRem);
+            }
+          }
+        })
 
         // temp
         const cakeData = props.cakeData;
@@ -195,12 +245,16 @@
           if (cakeIdFromUrl.split('-').length > 1)
             State.admin_pin.set(cakeIdFromUrl.split('-')[1]);
 
-          this.state.blessings.setArr(cakeData.blessings.map(b => b.text));
-
+          let textBlessings = [];
           for (const b of cakeData.blessings)
           {
-            this.state.app.addCandle(b.candle);
+            this.state.app.addCandle(b.candle, b.uuid);
+            let txtB = b.text;
+            txtB.blessing_id = b.uuid;
+            textBlessings.push(txtB);
           }
+          this.state.blessings.setArr(textBlessings);
+
 
           this.state.app.cakeConfig.decoration = cakeData.cake.decoration;
           this.state.app.setDecoration(cakeData.cake.decoration);
@@ -290,6 +344,60 @@
         this.update({description: "בחר נר"});
         this.state.menuActor.send({ type: 'candle_and_blessing' });
       },
+      zoomToCandle(e) {
+        if (this.getStateName() != 'mainMenu')
+            return;
+
+        const blessing_id = e.detail;
+
+        const cake = this.state.app.cakeConfig.obj;
+        const candle = cake.children.find(c => c.obj.userData.blessing_id == blessing_id);
+        if (!candle)
+        {
+          console.error(`candle with the blessing_id of ${blessing_id} not found`);
+          return;
+        }
+        
+
+        // semi-transparent other candles;
+        const otherCandles = cake.children.filter(c => c.name =='candle' && c.obj.userData.blessing_id != blessing_id);
+        for (const c of otherCandles)
+          c.setOpacity(0.15);
+
+        candle.setOpacity(1);
+        this.state.app.controls.fitToSphere(candle.obj, true);
+
+        const subscription = this.state.menuActor.subscribe((newMenuState) => {
+          if (newMenuState.value != 'mainMenu')
+          {
+            subscription.unsubscribe();
+            this.state.zoomedToCandle.set(false);
+            for (const c of otherCandles)
+              c.setOpacity(1);
+          }
+        });
+        
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        this.state.zoomedToCandle.set(true);
+      },
+      zoomOutOfCandle() {
+        const cake = this.state.app.cakeConfig.obj;
+        for (const c of cake.children)
+          c.setOpacity(1);
+
+        this.state.app.controls.setTarget(
+          this.state.app.cameraStartTarget.x,
+          this.state.app.cameraStartTarget.y,
+          this.state.app.cameraStartTarget.z,
+          true
+        );
+        this.state.app.controls.setPosition(
+          this.state.app.cameraStartPosition.x,
+          this.state.app.cameraStartPosition.y,
+          this.state.app.cameraStartPosition.z,
+          true
+        );
+      },
       selectedCandle(e) {
         const candleData = e.detail;
         this.state.app.candleBlessingConfig.candle.type = candleData.type.name;
@@ -298,7 +406,7 @@
         this.state.app.selectedCandle(this.state.menuActor);
         this.update({description: "בחר מיקום לנר"});
       },
-      addNewBlessing(event) {
+      async addNewBlessing(event) {
         console.log('canvas3d', 'addNewBlessing', event);
         this.state.app.candleBlessingConfig.text = event.detail;
         console.log(this.state.app.candleBlessingConfig);
@@ -306,7 +414,28 @@
         const splittedCurrUrl = currUrl.split('/');
         const cakeId = splittedCurrUrl[splittedCurrUrl.length-1];
 
-        API.addBlessing(cakeId, this.state.app.candleBlessingConfig.export());
+        let showSpinner = true;
+        setTimeout(() => {
+          if (showSpinner)
+            this.update({blessingCreationInProgress: true});
+        }, 1000);
+
+        let res;
+        try {
+          res = await API.addBlessing(cakeId, this.state.app.candleBlessingConfig.export());
+          showSpinner = false;
+          this.update({blessingCreationInProgress: false});
+        }
+        catch (e) {
+          console.error(e);
+          // todo: show error message and cancel.
+          return;
+        }
+
+        const blessing_id = res.id;
+        
+        this.state.app.candleBlessingConfig.text.blessing_id = blessing_id;
+        this.state.app.candleBlessingConfig.candle.obj.obj.userData.blessing_id = blessing_id;
         this.state.blessings.push(this.state.app.candleBlessingConfig.text);
 
         this.state.app.controls.setTarget(
@@ -355,14 +484,18 @@
         progress_bar,
         blessing_list,
         cake_menu,
-        color_selection
+        color_selection,
+        spinner,
+        c_button,
       },
       state: {
         menuState: '',
         menuActor: createActor(menuMachine),
         blessings: new ObservableArray(),
         GState: State,
-        description: ''
+        description: '',
+        blessingCreationInProgress: false,
+        zoomedToCandle: new ObservableValue(false),
       }
     }
   </script>

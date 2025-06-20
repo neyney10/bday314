@@ -1,4 +1,4 @@
-const API_URL = 'http://192.168.1.112:3000';//'http://localhost:3000';
+const API_URL = 'https://bday314srv.neyney10.workers.dev'; //'http://127.0.0.1:8787';// //'http://192.168.1.112:3000';//'http://localhost:3000';
 
 export async function getCake(id) {
     const url = API_URL + `/cake/${id}`;
@@ -31,7 +31,10 @@ export async function createCake(cakeData, title) {
     try {
         const response = await fetch(url, {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: { 
+                "Content-Type": "application/json",
+                "Access-Control-Allow-Origin": "http:/127.0.0.1:8787"
+            },
             body: JSON.stringify(body),
         });
 
@@ -53,25 +56,25 @@ export async function createCake(cakeData, title) {
 export async function addBlessing(id, blessing) {
     const url = API_URL + `/cake/${id}/blessings`;
     console.log('add blessing', JSON.stringify(blessing));
-    try {
-        const response = await fetch(url, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(blessing),
-        });
+    const response = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(blessing),
+    });
 
-        if (!response.ok) {
-            throw new Error(`Response status: ${response.status}`);
-        }
-
-    } catch (error) {
-        console.error(error.message);
+    if (!response.ok) {
+        throw new Error(`Response status: ${response.status}`);
     }
+
+    const json = await response.json();
+    console.log('[API]', 'addBlesssing', json);
+    return json;
+
 }
 
 
-export async function removeBlessing(id, admin_pin, index) {
-    const url = API_URL + `/cake/${id}-${admin_pin}/blessings/${index}`;
+export async function removeBlessing(id, admin_pin, blessing_id) {
+    const url = API_URL + `/cake/${id}-${admin_pin}/blessings/${blessing_id}`;
     try {
         const response = await fetch(url, {
             method: "DELETE",

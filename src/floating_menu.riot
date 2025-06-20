@@ -6,19 +6,27 @@
       </div> 
   </c_button>
 
-  <c_button id="cakebtn" class="menu-button" onclick={(e) => dispatchEventName(e, 'cake')}>
+  <c_button class="menu-button" onclick={(e) => dispatchEventName(e, 'cake')}>
     <div class="menu-button-content">
       <i class="fa-solid fa-cake-candles"></i>
       <span>הוסף נר</span>
     </div> 
   </c_button>
 
-    <c_button id="cakebtn" class="menu-button" onclick={e => window.location.href='/'}>
-    <div class="menu-button-content">
-      <i class="fa-solid fa-star"></i>
-      <span>עוגה חדשה</span>
-    </div> 
-  </c_button>
+    <c_button class="menu-button" onclick={e => window.location.href='/'}>
+      <div class="menu-button-content">
+        <i class="fa-solid fa-star"></i>
+        <span>עוגה חדשה</span>
+      </div> 
+    </c_button>
+
+    <c_button id="zoom-out-button" class="menu-button" if={state.isZoomOutOfCandleButtonVisible.get()} onclick={zoomOutClick}>
+      <div class="menu-button-content">
+        <i class="fa-solid fa-magnifying-glass-minus"></i>
+        <span>חזור</span>
+      </div> 
+    </c_button>
+
 
   <c_dialog if={state.isShareDialogVisible} onclose={hideShareDialog}>
     <div id="dialog-header" slot="header">
@@ -75,6 +83,15 @@
       }
     }
 
+    #zoom-out-button {
+      button {
+        background: rgba(100,100,255,0.3);
+
+        &:hover {
+          background: rgba(100,100,255,0.6);
+        }
+      }
+    }
 
   </style>
 
@@ -86,7 +103,13 @@
     import State from '/services/state.js';
 
     export default { 
-        onMounted() {
+        onBeforeMount(props, state) {
+          state.isZoomOutOfCandleButtonVisible = props.zoomedToCandle;
+        },
+        onMounted(props, state) {
+          state.isZoomOutOfCandleButtonVisible.sub(() => {
+            this.update(); // just refresh
+          });
         },
         dispatchEventName(e, eventName) {
           console.log('menu', 'click', eventName);
@@ -115,6 +138,9 @@
         hideSnacbkbar() {
             this.update({isSnackbarVisible: false})
         },
+        zoomOutClick() {
+          this.state.isZoomOutOfCandleButtonVisible.set(false);
+        },
         components: {
           c_dialog,
           c_button,
@@ -123,6 +149,7 @@
         state: {
           isShareDialogVisible: false,
           isSnackbarVisible: false,
+          isZoomOutOfCandleButtonVisible: {get: () => false},
           GState: State
         }
     }
