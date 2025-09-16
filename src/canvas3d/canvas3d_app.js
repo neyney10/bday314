@@ -83,7 +83,7 @@ export class Canvas3dApp
         this.models = models;
 
 
-        const bday314cake = new CakeObject(models['tempcake2.glb'], this.global); //candleless_cake3
+        const bday314cake = new CakeObject(models['tempcake3.glb'], this.global); //candleless_cake3 // tempcake2
         bday314cake.position.set(0,0.30,0);
         this.world.add(bday314cake);
         this.global.cakeConfig = {

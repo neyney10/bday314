@@ -2,8 +2,10 @@
   <div if={state.showFrontScreen} id="front-screen">
     <div id="front-screen-content">
         <progress_cake id="progress-cake" value={state.progVal}></progress_cake>
-        <div class="loading-text">מכינים את העוגה שלכם...</div>
-        <div class="loading-text">המתינו במתיקות...</div>
+        <div>
+          <div class="loading-text">מכינים את העוגה שלכם...</div>
+          <div class="loading-text">המתינו במתיקות...</div>
+        </div>
     </div>
   </div>
 
@@ -14,6 +16,10 @@
   <style type="scss">
     @use "typography";
     @use "animation";
+
+    :host {
+      font-family: Comixno;
+    }
 
     #front-screen {
       position: fixed;
@@ -30,6 +36,7 @@
           
         display: flex;
         flex-direction: column;
+        gap: 1em;
 
         position: relative;
         top: 50%;
@@ -53,14 +60,15 @@
       @include animation.animate(fadeOutOpacity, 1s, ease-in, 1);
     } 
 
-      @include animation.keyframes(fadeOutOpacity) {
+    @include animation.keyframes(fadeOutOpacity) {
       0% {
-          opacity : 1;
+        opacity : 1;
       }
       100% {
-          opacity : 0;
+        opacity : 0;
       }
     }
+
 
   </style>
 
@@ -102,7 +110,8 @@
           '/ballon.glb',
           '/balloon2.glb',
           '/balloon3.glb',
-          '/tempflame.glb'
+          '/tempflame.glb',
+          '/tempcake3.glb'
         ];
 
         const [_, cakeData, models] = await Promise.all([

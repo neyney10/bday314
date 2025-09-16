@@ -15,7 +15,7 @@
   <!-- style -->
   <style type="scss">
     @use "animation";
-
+    @use "breakpoints";
   
 
     #box {
@@ -43,6 +43,10 @@
       border-radius: 16px;
 
       padding: 0.25em;
+
+      @media (max-width: breakpoints.$tablet) {
+        width: 90vw;
+      }
     }
 
     .slot-wrapper {
