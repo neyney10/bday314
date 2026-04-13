@@ -5,14 +5,14 @@ THREE.BufferGeometry.prototype.disposeBoundsTree = disposeBoundsTree;
 THREE.Mesh.prototype.raycast = acceleratedRaycast;
 
 import { Text as TrText } from 'troika-three-text';
-import { CakeObject, CandleObject, CandlePlacementObject, Bday314Object, FlameObject, cloneWithMeshes, BalloonObject, BalloonsObject } from './object.js';
+import { CakeObject, CandleObject, CandlePlacementObject, Bday314Object, FlameWithShaderObject, cloneWithMeshes, BalloonObject, BalloonsObject } from './object.js';
 import { Bday314Renderer } from './renderer.js';
 import { Bday314World } from './world.js';
 import { randFloat } from 'three/src/math/MathUtils.js';
 import { intersectPosTop2Bot, randomizeMatrix } from './threejs_util.js';
 import { RotateAnimation } from './intro_animation.js';
 import { findPlacements } from './algo.js';
-
+import { getFlameMaterial } from './flame.js';
 
 
 export class Canvas3dApp 
@@ -83,7 +83,7 @@ export class Canvas3dApp
         this.models = models;
 
 
-        const bday314cake = new CakeObject(models['tempcake3.glb'], this.global); //candleless_cake3 // tempcake2
+        const bday314cake = new CakeObject(models['tempcake3-organized.glb'], this.global); //candleless_cake3 // tempcake2
         bday314cake.position.set(0,0.30,0);
         this.world.add(bday314cake);
         this.global.cakeConfig = {
@@ -106,7 +106,7 @@ export class Canvas3dApp
         
         
 
-        const text = 'מזל טוב ל Niko מאחל הרבה'
+        const text = '';
         this.setTitleText(text);
 
         const particles = 100;
@@ -151,6 +151,13 @@ export class Canvas3dApp
         console.log('[debug]', 'flame',  flame.obj);
         this.world.add(flame);*/
 
+        // temp flame with shader
+        //const flame = new FlameWithShaderObject(models['tempflame.glb'], this.global);
+        //this.world.add(flame);
+        /*animation:
+        flameMaterials[0].uniforms.time.value = time;
+        */
+
 
 
     
@@ -164,7 +171,6 @@ export class Canvas3dApp
         window.addEventListener('mousemove', (event) => {
             if (isMouseDown)
             {
-                //startX = event.clientX;
                 const xmove = event.movementX; 
                 if (xmove != 0) {
                     rotateCakeAndEnv(xmove / window.innerWidth);
@@ -173,18 +179,9 @@ export class Canvas3dApp
         });
         window.addEventListener('mousedown', (event) => {
             isMouseDown = true;
-            //startX = event.clientX;
         });
         window.addEventListener('mouseup', (event) => {
             isMouseDown = false;
-
-            /*const cake = this.global.cakeConfig.obj;
-            const clip = RotateAnimation(cake.obj.rotation.y, Math.PI/2, 1);
-            const action = cake.animationMixer.clipAction(clip);
-            action.clampWhenFinished = true;
-            action.setLoop(THREE.LoopOnce);
-            console.log('rotation.y', cake.obj.rotation.y);
-            action.play();*/
         });
 
         window.addEventListener('touchmove', (event) => {
@@ -337,7 +334,7 @@ export class Canvas3dApp
         let candleObj;
         if (candleData.type == 'bicolor')
         {
-            candleObj = new CandleObject(this.models['candle2.glb'], this.global);
+            candleObj = new CandleObject(this.models['flameless_candle.glb'], this.global);
             candleObj.setColors(candleData.colors);
         }
         else if (candleData.type == 'sparkler')
@@ -360,6 +357,8 @@ export class Canvas3dApp
 
     setDecoration(decorationData)
     {
+        this.cakeConfig.decoration.type = decorationData.type;
+
         // remove
         if (this.global.cakeConfig.decoration?.obj)
             this.world.remove(this.global.cakeConfig.decoration.obj);
@@ -413,13 +412,28 @@ export class Canvas3dApp
         if (this.global.cakeConfig.titleObj)
         {
             this.global.cakeConfig.titleObj.obj.text = text;
+            this.global.cakeConfig.titleObj.obj.fontSize = 0.12;
+  
+            if (text.length > 45)
+            {
+                this.global.cakeConfig.titleObj.obj.fontSize = 0.08;
+            }
+            else if (text.length > 25)
+            {
+                this.global.cakeConfig.titleObj.obj.fontSize = 0.09;
+            }
+            else if (text.length > 12)
+            {
+                this.global.cakeConfig.titleObj.obj.fontSize = 0.1;
+            }
+            
             this.global.cakeConfig.titleObj.obj.sync();
         }
         else
         {
             const cakeTitleText = new TrText();
 
-            const fontSize = 0.1;
+            let fontSize = 0.12;
             cakeTitleText.text = text;
             cakeTitleText.font = '/fonts/TrashimCLM-Bold.otf';
             cakeTitleText.fontSize = fontSize;
@@ -427,9 +441,9 @@ export class Canvas3dApp
             cakeTitleText.anchorY = "middle";
             cakeTitleText.outlineWidth = fontSize/10;
             cakeTitleText.color = 0xff5588;
-            cakeTitleText.outlineBlur = "5%";
-            cakeTitleText.position.y = this.global.cakeConfig.obj.top.position.y + 0.9;
-            cakeTitleText.maxWidth = 1.85;
+            cakeTitleText.outlineBlur = "3%";
+            cakeTitleText.position.y = this.global.cakeConfig.obj.top.position.y + 0.85;
+            cakeTitleText.maxWidth = 1.75;
             cakeTitleText.textAlign = 'center';
             cakeTitleText.sync();
 
@@ -439,4 +453,49 @@ export class Canvas3dApp
             this.world.add(cakeTitleTextObj);
         }
     }
+    
+    changeCake(cakeType) 
+    {
+        this.cakeConfig.type = cakeType;
+        this.world.remove(this.cakeConfig.obj);
+        
+        const bday314cake = new CakeObject(this.models[cakeModelFromType(cakeType)], this.global);
+        bday314cake.position.set(0,0.30,0);
+        this.world.add(bday314cake);
+        this.cakeConfig.obj = bday314cake;
+    }
+
+    changeCandle(candleModelData)
+    {
+        const candlePos = this.candleBlessingConfig.candle.obj.position.clone();
+        // remove
+        this.world.remove(this.candleBlessingConfig.candle.obj);
+        // add
+        const candleModel = candleModelData.model;
+        console.debug('changeCandle', candleModel);
+        const candle = new Bday314Object(candleModel, this.global);
+        candle.position.copy(candlePos);
+        this.candleBlessingConfig.candle.type = candleModelData.name;
+        this.candleBlessingConfig.candle.obj = candle;
+        this.world.add(this.candleBlessingConfig.candle.obj);
+    }
+}
+
+
+
+function cakeModelFromType(type) {
+    let modelName = '';
+    switch (type) {
+    case "layers":
+        modelName = 'tempcake3-organized.glb';
+        break;
+    case "penguin":
+        modelName = 'pengucake.glb';
+        break;
+    case "dog":
+        modelName = 'dogcake1.glb';
+        break;
+    };
+
+    return modelName;
 }

@@ -1,7 +1,8 @@
 import * as THREE from 'three';
 import { randFloat } from 'three/src/math/MathUtils.js';
+import { getFlameMaterial } from './flame.js';
 
-import { BlinkAnimationClip, MoveAnimation } from './intro_animation.js';
+import { BlinkAnimationClip, FlameAnimationClip, MoveAnimation } from './intro_animation.js';
 
 
 export class Bday314Object
@@ -116,6 +117,26 @@ export class CakeObject extends Bday314Object
             if (child.name == 'top')
                 this.top = child;
 
+            if (child.name.startsWith('layer'))
+            {
+                //console.debug('[debug]', 'CakeObject', 'found layer:', child.name);
+                if (child.name.indexOf('_') == -1)
+                    child.material.color = new THREE.Color(0x7e6048);
+                else child.material.color = new THREE.Color(0x98806d);
+            }
+
+            if (child.name.startsWith('Star'))
+            {
+                //console.debug('[debug]', 'CakeObject', 'found star:', child.name);
+                child.material.color = new THREE.Color(0x98806d);
+            }
+
+            if (child.name.startsWith('icing'))
+            {
+                //console.debug('[debug]', 'CakeObject', 'found star:', child.name);
+                child.material.color = new THREE.Color(0x654d3a);
+            }
+
             if (child.isMesh) {
                 const m = child;
                 m.geometry.computeBoundsTree();
@@ -123,9 +144,6 @@ export class CakeObject extends Bday314Object
         });
 
         if (!this.top) console.error("'top' wasn't found in the cake", this.obj);
-        
-        
-
     }
 
     onUpdate(deltaTime) {
@@ -144,6 +162,9 @@ export class CandleObject extends Bday314Object
         this.name = 'candle';
         this.obj.name = 'candle';
         this.colors = [0xFF0000, 0x00FF00];
+
+        const flame = new FlameWithShaderObject(threeobj, global);
+        this.addChild(flame);
     }
 
     onCreate()
@@ -248,9 +269,37 @@ export class FlameObject extends Bday314Object
         action.play();
 
     }
+}
 
+export class FlameWithShaderObject extends Bday314Object
+{
+    constructor(threeobj, global)
+    {
+        super(threeobj, global);
+        this.name = "FlameWithShader";
 
+        let flameGeo = new THREE.SphereGeometry(0.025 + Math.random()*0.01, 24, 24);
+        flameGeo.translate(0, 0.225, 0);
+        let flameMat = getFlameMaterial(true);
+        let flame = new THREE.Mesh(flameGeo, flameMat);
+        flame.rotation.y = THREE.MathUtils.degToRad(-45);
+        this.obj = flame;
+        this.obj.name = this.name;
+    }
 
+    onCreate()
+    {
+        this.animationMixer = this.getFakeAnimationMixer();
+    }
+
+    getFakeAnimationMixer()
+    {
+        return {
+            update: (deltaTime) => {
+                this.obj.material.uniforms.time.value += deltaTime;
+            }
+        }
+    }
 }
 
 

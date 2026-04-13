@@ -6,8 +6,9 @@
 
     <template slot="body">
       <div id="body">
-        <input id="userName" placeholder="שמך..."/>
-        <textarea id="userText" placeholder=אחל מזל טוב!"/>
+        <input id="userName" placeholder="שמך." maxlength="22"/>
+        <textarea id="userText" placeholder="אחל מזל טוב!" maxlength="512" onchange={onBlessingChange} onkeypress={onBlessingChange}></textarea>
+        <span>{state.blessingLength}/{this.$('#userText').maxLength}</span>
       </div>
     </template>
 
@@ -34,8 +35,8 @@
       height: 50vh;
 
       @media (max-width: breakpoints.$tablet) {
-        width: 90vw;
-        height: 77vh;
+        width: 100%;
+        height: 65dvh;
       }
       
       #userText, #userName {
@@ -73,6 +74,9 @@
     export default { 
         onMounted() {
         },
+        onBlessingChange(e) {
+          this.update({blessingLength: e.target.value.length});
+        },
         submitBlessing(e) {
           this.$('#select').classList.add('disabled');
           this.dispatchNewBlessingEvent(e);
@@ -90,6 +94,9 @@
           c_dialog,
           c_button,
         },
+        state: {
+          blessingLength: 0,
+        }
     }
   </script>
 </write_blessing>

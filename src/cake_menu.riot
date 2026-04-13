@@ -1,95 +1,123 @@
 <cake_menu>
-    <div id="wrapper">
+    <div class="wrapper" style="height: 95dvh;" if={state.isWelcomeScreenVisible}>
+        <div id="welcome-screen" style="display: flex; flex-direction: column; gap: 0.5em; height: 100%;">
+            <span style="background: url('/images/squigglylines.svg'); width:100%; height: 2em; background-size: 100% 400%; display: block;"></span>
+            <h1 style="text-align:center;">צרו עוגה וירטואלית משלכם</h1>
+
+            שלום וברוכים הבאים ליצירת עוגת יום ההולדת המושלמת! כאן תוכלו לעצב עוגה וירטואלית עם מגוון אפשרויות, לשתף אותה עם חברים ולחגוג יחד אתכם. לחצו על "התחל" כדי להתחיל לעצב את העוגה שלכם ולהפוך את יום ההולדת למיוחד עוד יותר! 🎂🎉
+            <div class="welcome-screen-actions" style="display: flex; gap: 1em;">
+                <c_button id="begin-stepper-button" onclick={e => update({isWelcomeScreenVisible: false})}>התחל</c_button>
+                <c_button id="about-button" onclick={e => update({isAboutDialogVisible: true})}>אודות</c_button>
+            </div>
+            <span style="background: url('/images/squigglylines.svg'); width:100%; height: 2em; background-size: 100% 400%; display: block; margin-top: auto;"></span>
+
+        </div>
+    </div>
+
+    <div class="wrapper {state.stepChangeObserver.value == 1 ? 'wrapper-stepper' : ''}" if={!state.isWelcomeScreenVisible}>
         <stepper steps={3} stepChangeObserver={state.stepChangeObserver}>
             <template slot="step1">
-                <div class="horizontal-line"></div>
-                <div id="decorations">
-                    <c_button class={state.selectedDecoration == 'snow' ? 'selected' : null } onclick={e => selectDecoration('snow')}>
-                        <div class="button-img">
-                            <img src="/images/snow.png">
-                        </div>
-                        <div class="button-text">
-                            נקודות שלג
-                        </div>
-                    </c_button>
-                    <c_button class={state.selectedDecoration == 'balloons' ? 'selected' : null} onclick={e => selectDecoration('balloons')}>
-                        <div class="button-img">
-                            <img src="/images/balloons.png">
-                        </div>
-                        <div class="button-text">
-                            בלונים
-                        </div>
-                    </c_button>
+                <div class="step1-content">
+                    
+                    <div style="max-height: 12dvh;">
+                        <p>1. בחרו את סוג העוגה.</p>
+                        <p>2. בחרו אווירה.</p>
+                        <p>3. בסיום, לחצו המשך.</p>
+                    </div>
+                    
+                    <c_button class="stepper-next-button" onclick={e => stepperNext(1)}>המשך</c_button>
                 </div>
-
-                <div class="horizontal-line"></div>
-                <div id="cakeOptions">
-                    <c_button class={state.selectedCakeType == 'layers' ? 'selected' : null} onclick={e => selectCake('layers')}>
-                        <div class="button-img">
-                            <img src="/images/layers_cake.png">
-                        </div>
-                        <div class="button-text">
-                            עוגת שכבות
-                        </div>
-                    </c_button>
-                    <c_button class={state.selectedCakeType == 'penguin' ? 'selected' : null} onclick={e => selectCake('penguin')}>פנגווין</c_button>
-                </div>
-
-                <c_button class="stepper-next-button" onclick={e => stepperNext(1)}>המשך</c_button>
             </template>
 
             <template slot="step2">
-                <div id="cakeTitleWrapper">
-                    <span>כותרת</span>
-                    <input id="cakeTitle" placeholder="מזל טוב!" oninput={onCakeTitleEdit} value={state.cakeTitle}>
+                <div>
+                    <div class="step2-content">
+                        <p>כתבו משפט או ברכה שיופיעו מעל העוגה.</p>
+                        <p>או העזרו בבינה מלאכותית שתצור עבורכם ברכה.</p>
+                        <div id="cakeTitleWrapper">
+                            <span>כותרת</span>
+                            <c_input id="cakeTitle" placeholder="מזל טוב!" maxlength="60" oninput={onCakeTitleEdit} value={state.cakeTitle}></c_input>
+                            <span>{state.cakeTitle.length}/60</span>
+                        </div>
+
+                        <div id="generate-cake-title-wrapper">
+                            <c_button class="generate-cake-title-button" onclick={generateText}><i class="fa-solid fa-wand-magic-sparkles"></i> צור ברכה באמצעות מודל בינה מלאכותית</c_button>
+                            <button class="chip">מצחיק</button>
+                            <button class="chip">רישמי</button>
+                        </div>
+            
+                        <c_button class="stepper-next-button" onclick={e => stepperNext(2)}>המשך</c_button>
+                    </div>
                 </div>
-                <c_button class="stepper-next-button" onclick={e => stepperNext(2)}>המשך</c_button>
             </template>
 
             <template slot="step3">
+                <p>
+                    הכל מוכן לחגיגה! <br> 
+                    אז שנתחיל אותה?
+                </p>
                 <c_button onclick={(e) => createCake()} if={!state.created && !state.cakeCreationInProgress}>צור עוגה!</c_button>
                 <spinner size="1.2em" if={state.cakeCreationInProgress}></spinner>
+                <span style="background: url('/images/squigglylines.svg'); width:100%; height: 2em; background-size: 100% 400%; display: block; margin-top: 1em;"></span>
             </template>
         </stepper>
-        
-
-        
-
     </div>
+
+    <drawer data={state.cakeCustomizations} if={state.stepChangeObserver.value == 0 && state.isWelcomeScreenVisible == false}
+        oncakeTypeChange={(e) => {update({cakeCustomizations: {...state.cakeCustomizations, selectedCakeType: e.detail}})}}
+        ondecorationChange={(e) => {update({cakeCustomizations: {...state.cakeCustomizations, selectedDecoration: e.detail}})}}
+        >
+    </drawer>
+
+    <c_dialog if={state.isAboutDialogVisible} onclose={hideAboutDialog}>
+        <div id="about-dialog-header" slot="header">
+            אודות
+        </div>
+
+        <template slot="body">
+            <div id="about-dialog-body">
+                <p>נוצר על ידי "Neyney".</p>
+                <p>מספר גרסא: 1.0.0.</p>
+                <p>פורסם לראשונה בשנת 2026</p>
+            </div>
+        </template>
+
+        <template slot="actions">
+            <c_button id="1">משהו</c_button>
+            <c_button id="2">שתף</c_button>
+            <c_button id="3">גיטהאב</c_button>
+        </template>
+    </c_dialog>
+
+
+
 
     <style type="scss">
         @use "breakpoints";
 
         :host {
-            width: 33%;
-            height: 90dvh;
+            width: 28dvw;
+            height: 95dvh;
             position: fixed;
 
-            background: RGBA(255,255,255,0.5);
-            background: linear-gradient(45deg,rgba(42, 123, 155, 0.3) 0%, rgba(87, 199, 133, 0.3) 50%, rgba(237, 83, 152, 0.3) 100%);
-            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.15);
-            $blur-size: 15px;
-            backdrop-filter: blur($blur-size);
-            -webkit-backdrop-filter: blur($blur-size);
-
-            right: 0.5em;
+            right: 1vw;
             top: 2.5vh;
-            border-radius: 16px;
-            padding: 0.5em;
-            border: 3px double RGBA(180, 25, 150, 0.2);
+
             direction: rtl;
 
             @media (max-width: breakpoints.$tablet) {
-                width: 90%;
-                background: transparent;
-                backdrop-filter: none;
-
+                width: 95vw;
+                right: 2.5vw;
             }
         }
 
         stepper {
             height: 100%;
             position: relative;
+
+            p {
+                margin: 0.25em;
+            }
         }
 
         .stepper-next-button {
@@ -98,14 +126,46 @@
             height: fit-content;
             display: block;
 
-            position: absolute;
-            bottom: 0;
+            position: relative;
+
         }
 
-        #wrapper {
-            height: 100%;
+
+  
+        
+
+
+
+        .wrapper {
+            height: auto;
+            box-sizing: border-box;
             display: flex;
             flex-direction: column;
+
+            padding: 0.5em;
+            border-radius: 16px;
+            border: 3px double RGBA(180, 25, 150, 0.2);
+
+            background: RGBA(255,255,255,0.5);
+            background: radial-gradient(circle,rgba(254, 198, 221, 0.5) 0%, rgba(226, 193, 250, 0.5) 53%, rgba(184, 214, 249, 0.5) 100%);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.15);
+            $blur-size: 15px;
+            backdrop-filter: blur($blur-size);
+            -webkit-backdrop-filter: blur($blur-size);
+            
+
+        }
+
+        .wrapper-stepper {
+            @media (max-width: breakpoints.$tablet) {
+                height: 100%; 
+                background: transparent; 
+                backdrop-filter: none;
+            }
+        }
+
+        #begin-stepper-button {
+            display: block;
         }
 
         #decorations {
@@ -154,10 +214,6 @@
             }
         }
 
-        .selected {
-            background-color: RGBA(255,0,255,0.5);
-        }
-
 
         .horizontal-line {
             height: 1px;
@@ -169,51 +225,87 @@
             margin-right: auto;
         }
 
+
+        .step2-content {
+            @media (max-width: breakpoints.$tablet) {
+                background: radial-gradient(circle,rgba(254, 198, 221, 0.5) 0%, rgba(226, 193, 250, 0.5) 53%, rgba(184, 214, 249, 0.5) 100%);
+                $blur-size: 15px;
+                backdrop-filter: blur($blur-size);
+                -webkit-backdrop-filter: blur($blur-size);
+                position: absolute;
+                bottom: -0.5em;
+                right: -0.5em;
+                width: calc(100% + 1em);
+
+                border-top: 1px double aliceblue;
+                border-radius: 6px;
+                padding: 0.5em;
+                box-sizing: border-box;
+            }
+        }
+
         #cakeTitleWrapper {
             margin: auto;
             width: fit-content;
             display: flex;
             flex-direction: column;
+        }
 
-            #cakeTitle {
-                background-color: RGBA(255,255,255,0.2);
-                color: black;
-                padding: 0.25em;
-                $blur-size: 7px;
-                backdrop-filter: blur($blur-size);
-                -webkit-backdrop-filter: blur($blur-size);
-                border-radius: 4px;
+        #generate-cake-title-button {
+            display: inline-block;
+        }
 
-                &:focus {
-                    border: 2px double blue;
-                    box-shadow: 0 0 15px rgba(0,0,0,0.5);
-                    background-color: RGBA(255,255,255,0.5);
+        .chip {
+            display: inline-block;
+            padding: 0.25em 0.75em;
+            border-radius: 16px;
+            background-color: RGBA(255,255,255,0.5);
+            border: 1px solid RGBA(0,0,0,0.2);
+            margin: 0.25em;
+        }
+
+        c_dialog {
+            #about-dialog-body {
+                display: flex;
+                flex-direction: column;
+                gap: 0.25em;
+
+                p {
+                    margin: 0;
+                    word-break: break-all;
                 }
             }
         }
-
-
 
     </style>
 
     <script>
         import stepper from './cake_config_stepper.riot';
         import c_button from './button.riot';
+        import c_input from './input.riot';
         import spinner from './progress_spinner.riot';
+        import c_dialog from './dialog.riot';
+        import drawer from './drawer.riot';
         
         import * as API from '/services/api.js';
         import State from '/services/state.js';
 
-        import { Subject } from 'rxjs';
+        import { BehaviorSubject } from 'rxjs';
 
         export default {
+            onMounted() {
+                this.state.stepChangeObserver.subscribe(step => {
+                    console.log('[debug]', 'cake_menu', 'stepChangeObserver', step);
+                    this.update();
+                });
+            },
             async createCake() {
                 this.update({cakeCreationInProgress: true});
 
                 const cakeData = {
-                    type: this.state.selectedCakeType,
+                    type: this.state.cakeCustomizations.selectedCakeType,
                     decoration: {
-                        type: this.state.selectedDecoration
+                        type: this.state.cakeCustomizations.selectedDecoration
                     }
                 };
                 const res = await API.createCake(cakeData, this.state.cakeTitle);
@@ -231,14 +323,22 @@
                     console.error('failed to create a cake');
                 }
             },
-            selectDecoration(type) {
-                this.update({selectedDecoration: type});
-                this.dispatchCustomEvent('decorationChange', type);
+            async generateText() {
+                const res = await API.generateText();
+                if (res?.content)
+                {
+                    this.update({cakeTitle: res.content});
+                    console.log('[debug]', 'cake title elem:', this.$('#cakeTitle'), this.$('#cakeTitle').value);
+                    setTimeout(() => {
+                        this.$('#cakeTitle').value = res.content;
+                        console.log('[debug]', 'cake title elem2:', this.$('#cakeTitle'), this.$('#cakeTitle').value);
+                    }, 1);
+
+                    this.dispatchCustomEvent('titleChanged', this.state.cakeTitle);
+
+                }
             },
-            selectCake(type) {
-                this.update({selectedCakeType: type});
-                this.dispatchCustomEvent('cakeTypeChange', type);
-            },
+
             dispatchCakeCreatedEvent(data) {
                 this.dispatchCustomEvent("cakeCreated", data);
             },
@@ -247,24 +347,35 @@
                 this.root.dispatchEvent(new CustomEvent(name, {detail: value}));
             },
             onCakeTitleEdit(e) {
-                this.state.cakeTitle = e.target.value;
+                e.stopPropagation();
+                this.update({cakeTitle: e.target.value});
                 this.dispatchCustomEvent('titleChanged', this.state.cakeTitle);
             },
             stepperNext(step) {
                 this.state.stepChangeObserver.next(step);
             },
+            hideAboutDialog() {
+                this.update({isAboutDialogVisible: false});
+            },
             components: {
                 stepper,
                 c_button,
-                spinner
+                c_input,
+                spinner,
+                c_dialog,
+                drawer
             },
             state: {
+                isWelcomeScreenVisible: true,
                 created: false,
                 cakeTitle: "",
-                selectedDecoration: "snow",
-                selectedCakeType: "layers",
+                cakeCustomizations: {
+                    selectedDecoration: "snow",
+                    selectedCakeType: "layers",
+                },
                 cakeCreationInProgress: false,
-                stepChangeObserver: new Subject()
+                stepChangeObserver: new BehaviorSubject(0),
+                isAboutDialogVisible: false,
             }
         }
     </script>

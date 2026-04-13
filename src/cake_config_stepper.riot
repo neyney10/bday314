@@ -1,6 +1,6 @@
 <cake_config_stepper>
     <div id="chain">
-        <div class="step-head" onclick={(e) => setCurrent(0)}>
+        <div class="step-head" onclick={(e) => state.stepChangeObserver.next(0)}>
             <div class="step-num"><i class="fa-solid fa-cake-candles"></i></div>
             <div class="step-name">עוגה</div>
         </div>
@@ -8,7 +8,7 @@
         <template if={props.steps >= 2}>
             <div class="vertical-line-arrow"></div>
 
-            <div class="step-head" onclick={(e) => setCurrent(1)}>
+            <div class="step-head" onclick={(e) => state.stepChangeObserver.next(1)}>
                 <div class="step-num"><i class="fa-solid fa-pencil"></i></div>
                 <div class="step-name">כיתוב</div>
             </div>
@@ -17,7 +17,7 @@
         <template if={props.steps >= 3}>
             <div class="vertical-line-arrow hide-line"></div>
 
-            <div class="step-head" onclick={(e) => setCurrent(2)}>
+            <div class="step-head" onclick={(e) => state.stepChangeObserver.next(2)}>
                 <div class="step-num"><i class="fa-solid fa-check"></i></div>
                 <div class="step-name">שיתוף</div>
             </div>
@@ -27,19 +27,23 @@
 
     </div>
 
-    <template if={state.step == 0}>
-        <slot name="step1"/>
-    </template>
-    
-    <template if={state.step == 1}>
-        <slot name="step2"/>
-    </template>
+    <div id="content">
+        <template if={state.step == 0}>
+            <slot name="step1"/>
+        </template>
+        
+        <template if={state.step == 1}>
+            <slot name="step2"/>
+        </template>
 
-    <template if={state.step == 2}>
-        <slot name="step3"/>
-    </template>
+        <template if={state.step == 2}>
+            <slot name="step3"/>
+        </template>
+    </div>
 
     <style type="scss">
+        @use "animation";
+
         #chain {
             display: flex;
             flex-direction: row;
@@ -65,6 +69,10 @@
                     border: 1px black double;
                     background: gray;
                     margin-left: 0.25em;
+
+                    > i {
+                        line-height: 1.75em
+                    }
                 }
             }
 
@@ -117,6 +125,19 @@
         }
 
 
+        .stepper-tab-animation {
+            @include animation.animate(fadeInOpacity1, 0.5s, ease-in, 1);
+
+            @include animation.keyframes(fadeInOpacity1) {
+                0% {
+                    opacity : 0;
+                }
+                100% {
+                    opacity : 1;
+                }
+            }
+        }
+
     </style>
 
     <script>
@@ -134,6 +155,10 @@
                     });
                 }
 
+                this.$('#content').addEventListener('animationend', () => {
+                    this.$('#content').classList.remove("stepper-tab-animation");
+                });
+
             },
             setCurrent(current) {
                 const steps = this.state.steps;
@@ -150,6 +175,7 @@
                 }
 
                 this.update({step: current});
+                this.$('#content').classList.add("stepper-tab-animation");
 
                 steps[this.state.step].classList.add("current");
 

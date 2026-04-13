@@ -29,18 +29,27 @@
 
 
   <c_dialog if={state.isShareDialogVisible} onclose={hideShareDialog}>
-    <div id="dialog-header" slot="header">
+    <div id="share-dialog-header" slot="header">
       שיתוף
     </div>
 
     <template slot="body">
-      <p>שתף את העוגה עם חברים על מנת לשמח את בעל הברכה.</p>
-      <p>{shareLink()}</p>
+      <div id="share-dialog-body">
+        <p>שתפו את העוגה עם חברים על מנת לשמח את בעל הברכה.</p>
+        <a href="{shareLink()}">{shareLink()}</a>
+        <canvas id="qrcode-canvas"></canvas>
 
-      <template if={state.GState.admin_pin.get()}>
-        <p>שמור והשתמש בקישור זה על מנת לחזור לנהל את העוגה.</p>
-        <p>{adminLink()}</p>
-      </template>
+        <template if={state.GState.admin_pin.get()}>
+          <p style="border-bottom: 3px solid #444; width:75%">ניהול</p>
+          <p>שמרו והשתמשו בקישור זה על מנת לחזור לנהל את העוגה.</p>
+          <a href="{adminLink()}">{adminLink()}</a>
+          <p>חושבים שתאבדו את הקישור? אפשר לשלוח לכם אותו לדואר האלקטרוני שלכם:</p>
+          <div id="email-send-container">
+            <c_input id="email-input" type="email" placeholder="האימייל שלך" onchange={emailInputOnChange} oninput={emailInputOnChange}></c_input>
+            <c_button onclick={sendLinkToEmail}>שלח לאימייל</c_button>
+          </div>
+        </template>
+      </div>
     </template>
 
     <template slot="actions">
@@ -55,6 +64,8 @@
 
   <!-- style -->
   <style type="scss">
+    @use "breakpoints";
+
     :host {
       background: transparent;
 
@@ -76,11 +87,15 @@
         display: flex;
         flex-direction: column;
         gap: 0.25em;
-        width: 64px;
+        width: 4.75em;
         font-size: 14px;
 
         i {
           font-size: 2em;
+        }
+
+        @media (max-width: breakpoints.$tablet) {
+          font-size: 12px;
         }
       }
     }
@@ -95,14 +110,49 @@
       }
     }
 
+    c_dialog {
+      #share-dialog-body {
+        display: flex;
+        flex-direction: column;
+        gap: 1em;
+        padding: 0.3em;
+        margin-bottom: 0.5em;
+        margin-top: 0.5em;
+
+        p {
+          margin: 0;
+          word-break: break-all;
+        }
+
+        #qrcode-canvas {
+          align-self: center;
+          border-radius: 5%;
+        }
+
+        #email-send-container {
+          display: flex;
+          flex-direction: row;
+          gap: 0.5em;
+
+          c_input {
+            flex-grow: 1;
+            display: inline-flex;
+          }
+        }
+      }
+    }
+
   </style>
 
   <script>
+    import QRCode from 'qrcode'
     import c_dialog from './dialog.riot';
     import c_button from './button.riot';
     import c_snackbar from './snackbar.riot';
+    import c_input from './input.riot';
 
     import State from '/services/state.js';
+    import * as API from '/services/api.js';
 
     export default { 
         onBeforeMount(props, state) {
@@ -123,13 +173,39 @@
           this.showSnacbkbar();
         },
         shareLink() {
-          return `http://www.bday314.co.il/cake/${this.state.GState.cake_uuid.get()}`;
+          return `https://bday314.pages.dev/cake/${this.state.GState.cake_uuid.get()}`;
+        },
+        shareQRCode() {
+          const qrcodeCanvasElem = this.$('#qrcode-canvas');
+          console.debug('qrcodeCanvasElem', qrcodeCanvasElem);
+
+          const opts = {
+            margin: 1,
+            color: {
+              dark:"#00000000",
+              light:"#481d7bff"
+            }
+          }
+
+          QRCode.toCanvas(qrcodeCanvasElem, this.shareLink(), opts, (error) => {
+            if (error) console.error(error)
+            console.log('qrcode success!');
+          })
         },
         adminLink() {
           return this.shareLink() + `-${this.state.GState.admin_pin.get()}`;
         },
+        emailInputOnChange(e) {
+          console.debug('email input change', e.target.value);
+          this.update({email: e.target.value});
+        },
+        async sendLinkToEmail() {
+          const res = await API.sendAdminLinkToEmail(this.state.GState.cake_uuid.get(), this.state.GState.admin_pin.get(), this.state.email);
+          this.state.email = '';
+        },
         showShareDialog(e) {
-          this.update({isShareDialogVisible: true})
+          this.update({isShareDialogVisible: true});
+          this.shareQRCode();
         },
         hideShareDialog(e) {
           this.update({isShareDialogVisible: false})
@@ -146,12 +222,14 @@
         components: {
           c_dialog,
           c_button,
-          c_snackbar
+          c_snackbar,
+          c_input
         },
         state: {
           isShareDialogVisible: false,
           isSnackbarVisible: false,
           isZoomOutOfCandleButtonVisible: {get: () => false},
+          email: '',
           GState: State
         }
     }

@@ -6,13 +6,15 @@ export class BlessingConfig
         this.candle = new CandleConfig();
         this.text = new BlessingTextConfig();
         this.uuid = undefined;
+        this.upvotes = 0;
     }
 
     export()
     {
         return {
             candle: this.candle.export(),
-            text: this.text.export()
+            text: this.text.export(),
+            upvotes: this.upvotes
         }
     }
 }

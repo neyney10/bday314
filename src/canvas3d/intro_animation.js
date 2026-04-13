@@ -1,4 +1,4 @@
-import { AnimationClip, Box3, Sphere, Vector3, VectorKeyframeTrack } from "three";
+import { AnimationClip, Box3, Sphere, Vector3, VectorKeyframeTrack, NumberKeyframeTrack } from "three";
 
 export function MoveAnimation(origin, distance, direction, duration) {
     const times = [0, duration];
@@ -71,6 +71,19 @@ export function BlinkAnimationClip(duration, min, max) {
     const track = new VectorKeyframeTrack( trackName, times, values );
 
     return new AnimationClip( null, duration, [ track ] );
+}
+
+export function FlameAnimationClip(duration, min, max) {
+
+    const times = [0, duration];
+    const values = [max, min];
+
+    const trackName = '.material.uniforms.time.value';
+
+    const track = new NumberKeyframeTrack( trackName, times, values );
+
+    return new AnimationClip( null, duration, [ track ] );
 
 }
+
 

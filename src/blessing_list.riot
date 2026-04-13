@@ -12,12 +12,23 @@
                 </p>
             </div>
 
-            <c_button id="select-blessing" onclick={e => notifyItemClick(index)}>
-                <i class="fa-solid fa-eye"></i>
-                הראה נר
-            </c_button>
+            <div class="item-actions">
+                <c_button id="show-candle-btn" onclick={e => notifyItemClick(index)}>
+                    <i class="fa-solid fa-eye"></i>
+                    הראה נר
+                </c_button>
+
+                <c_button id="upvote-btn" onclick={e => upvoteBlessing(index)} disabled={this.isUpvoted(state.GState.cake_uuid.get(), item.blessing_id) || state.upvoteInProgress.includes(index)}>
+                    <div>
+                        <span id="upvote-count">{ item.upvotes }</span>
+                        <i class="fa-solid fa-thumbs-up"></i>
+                        <spinner size="0.5em" if={state.upvoteInProgress.includes(index)}></spinner>
+                    </div>
+                </c_button>
+            </div>
 
             <spinner size="1.2em" if={state.inProgress.includes(index)}></spinner>
+            
         </div>
     </div>
 
@@ -26,11 +37,7 @@
         #list {
             display: flex;
             flex-direction: column;
-            background: radial-gradient(circle,rgba(63, 94, 251, 0.2) 0%, rgba(213, 70, 252, 0.2) 100%);
-            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.15);
-            $blur-size: 15px;
-            backdrop-filter: blur($blur-size);
-            -webkit-backdrop-filter: blur($blur-size);
+            
             
             width: auto;
             padding: 2px;
@@ -41,7 +48,7 @@
             .item {
                 position: relative;
                 border: solid 1px green;
-                border-radius: 16px;
+                border-radius: 8px;
                 padding-bottom: 0.5em;
                 margin-bottom: 0.25em;
                 font-family: Varela;
@@ -49,6 +56,14 @@
                 direction: rtl;
                 overflow: clip;
 
+                background: RGBA(255,255,255,0.5);
+                background: radial-gradient(circle,rgba(254, 198, 221, 0.5) 0%, rgba(226, 193, 250, 0.5) 53%, rgba(184, 214, 249, 0.5) 100%);
+                box-shadow: 0 4px 30px rgba(0, 0, 0, 0.15);
+                $blur-size: 15px;
+                backdrop-filter: blur($blur-size);
+                -webkit-backdrop-filter: blur($blur-size);
+
+                $bluish-color: #32a1ce;
 
                 .title {
                     display: flex;
@@ -58,7 +73,7 @@
                     text-shadow: 0 0 15px rgba(180, 25, 150, 0.5);
 
                     line-height: 2em;
-                    border-bottom: thick double #32a1ce;
+                    border-bottom: 2px solid $bluish-color;
 
                     #remove-blessing-btn {
                         position: absolute;
@@ -76,9 +91,39 @@
                     }
                 }
 
-                #select-blessing {
+                .item-actions {
                     position: relative;
                     bottom: -0.5em;
+
+                    display: flex;
+                    gap: 1%;
+
+                    > #show-candle-btn {
+                        flex-grow: 20;
+                    }
+
+                    > #upvote-btn {
+                        position: relative;
+                        flex-grow: 1;
+
+                        div {
+                            display: flex;
+                            justify-content: center;
+                            gap: 5%;
+
+                            i {
+                                color: $bluish-color;
+                            }
+
+                            > #upvote-count {
+                                align-self: center;
+                                text-align: center;
+                                min-width: 2em;
+
+                                font-weight: bold;
+                            }
+                        }    
+                    }
                 }
 
                 spinner {
@@ -111,7 +156,7 @@
             },
             async removeBlessing(index) {
                 const blessing_id = this.state.items[index].blessing_id;
-                console.log('removing blessing...', index, blessing_id, State);
+                console.log('[debug] removing blessing...', index, blessing_id, State);
                 this.update({inProgress: [...this.state.inProgress, index]});
                 
                 if (await API.removeBlessing(State.cake_uuid.get(), State.admin_pin.get(), blessing_id))
@@ -132,6 +177,29 @@
                 const blessing_id = this.state.items[index].blessing_id;
                 this.root.dispatchEvent(new CustomEvent('itemClick', {detail: blessing_id}));
             },
+            async upvoteBlessing(index) {
+                const blessing_id = this.state.items[index].blessing_id;
+                console.debug('[debug] upvoting a blessing...', index, blessing_id, State);
+                this.update({upvoteInProgress: [...this.state.upvoteInProgress, index]}); // TODO: do a seperate upvote progress spinner
+                
+                if (await API.upvoteBlessing(State.cake_uuid.get(), blessing_id))
+                {
+                    const upvotedBlessingIdx = this.state.upvoteInProgress.indexOf(index);
+                    this.state.items[index].upvotes += 1;
+                    localStorage.setItem(this.upvoteHash(State.cake_uuid.get(), blessing_id), true);
+
+                    this.state.upvoteInProgress.splice(upvotedBlessingIdx, 1);
+                    this.update({
+                        upvoteInProgress: this.state.upvoteInProgress,
+                    })
+                }
+            },
+            upvoteHash(cake_id, blessing_id) {
+                return `upvote-${blessing_id}-${cake_id}`;
+            },
+            isUpvoted(cake_id, blessing_id) {
+                return localStorage.getItem(this.upvoteHash(cake_id, blessing_id));
+            },
             components: {
                 spinner,
                 c_button
@@ -139,6 +207,7 @@
             state: {
                 items: [],
                 inProgress: [],
+                upvoteInProgress: [],
                 GState: State,
             },
         }

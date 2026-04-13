@@ -81,7 +81,7 @@
       top: 80px;
       display: block;
       min-width: 16em;
-      max-width: 33vw;
+      max-width: 28dvw;
       max-height: calc(100vh - 80px);
       overflow-y: auto;
 
@@ -159,21 +159,6 @@
     import State from '/services/state.js';
 
 
-    function cakeModelFromType(type) {
-      let modelName = '';
-      switch (type) {
-        case "layers":
-          modelName = 'tempcake3.glb';
-          break;
-        case "penguin":
-          modelName = 'pengucake.glb';
-          break;
-      };
-
-      return modelName;
-    }
-
-
     export default {  
       async onMounted(props) {
         this.state.app = new Canvas3dApp();
@@ -200,13 +185,14 @@
         });
 
         this.state.candleTypes = [
-          { name: 'bicolor', model: props.models['candle2.glb'], option1: "color", option2: "color" },
+          { name: 'bicolor', model: props.models['flameless_candle.glb'], option1: "color", option2: "color" },
           { name: 'sparkler', model: props.models['sparkler.glb'] }
         ];
 
         State.cake_uuid.sub(uuid => this.update({GState: State}));
         this.state.blessings.sub(e => {
           if (!e) return;
+          console.debug('[debug]', 'blessing obs', this.state.blessings.getArr().length);
           if (e.removed.length > 0)
           {
             // remove candle as well.
@@ -222,21 +208,21 @@
               this.state.app.world.remove(candleToRem);
             }
           }
+
+          if (e.removed.length > 0 || e.added.length > 0)
+          {
+            this.update();
+          }
         })
 
-        // temp
+        // temp - apply loaded data
         const cakeData = props.cakeData;
         console.debug('[debug]', 'canvad3d:onMounted', 'cakeData', cakeData);
         if (cakeData)
         {
-          this.state.app.cakeConfig.type = cakeData.cake.type;
-          this.state.app.world.remove(this.state.app.cakeConfig.obj);
-          
-          const bday314cake = new CakeObject(this.props.models[cakeModelFromType(this.state.app.cakeConfig.type)], this.global);
-          bday314cake.position.set(0,0.30,0);
-          this.state.app.world.add(bday314cake);
-          this.state.app.cakeConfig.obj = bday314cake;
-
+          this.state.app.changeCake(cakeData.cake.type);
+          this.state.app.setDecoration(cakeData.cake.decoration);
+          this.state.app.setTitleText(cakeData.meta.title);
 
           State.cake_uuid.set(cakeData.meta.uuid);
           const currUrl = window.location.href;
@@ -251,15 +237,11 @@
             this.state.app.addCandle(b.candle, b.uuid);
             let txtB = b.text;
             txtB.blessing_id = b.uuid;
+            txtB.upvotes = b.upvotes;
             textBlessings.push(txtB);
           }
           this.state.blessings.setArr(textBlessings);
-
-
-          this.state.app.cakeConfig.decoration = cakeData.cake.decoration;
-          this.state.app.setDecoration(cakeData.cake.decoration);
-
-          this.state.app.setTitleText(cakeData.meta.title);
+          console.debug('[debug]', 'canvad3d:onMounted', 'blessings loaded', this.state.blessings.getArr());
         }
       },
       getStateName() {
@@ -274,36 +256,19 @@
       },
       onCakeTypeChange(e) {
         console.log('onCakeTypeChange')
-        this.state.app.cakeConfig.type = e.detail;
-        this.state.app.world.remove(this.state.app.cakeConfig.obj);
-        
-        const bday314cake = new CakeObject(this.props.models[cakeModelFromType(e.detail)], this.global);
-        bday314cake.position.set(0,0.30,0);
-        this.state.app.world.add(bday314cake);
-        this.state.app.cakeConfig.obj = bday314cake;
+        this.state.app.changeCake(e.detail);
       },
       onDecorationChange(e) {
-        this.state.app.cakeConfig.decoration.type = e.detail;
+        console.log('onDecorationChange')
         this.state.app.setDecoration({
           type: e.detail
         });
       },
       setCakeTitle(e) {
-        const title = e.detail;
-        this.state.app.setTitleText(title);
+        this.state.app.setTitleText(e.detail);
       },
       changeCandleType(e) {
-        const candlePos = this.state.app.candleBlessingConfig.candle.obj.position.clone();
-        // remove
-        this.state.app.world.remove(this.state.app.candleBlessingConfig.candle.obj);
-        // add
-        const candleModel = e.detail.model;
-        console.debug('changeCandleType', candleModel);
-        const candle = new Bday314Object(candleModel, this.state.app.global);
-        candle.position.copy(candlePos);
-        this.state.app.candleBlessingConfig.candle.type = e.detail.name;
-        this.state.app.candleBlessingConfig.candle.obj = candle;
-        this.state.app.world.add(this.state.app.candleBlessingConfig.candle.obj);
+        this.state.app.changeCandle(e.detail);
       },
       changeCandleColor1(e) {
         const candle = this.state.app.candleBlessingConfig.candle.obj;
@@ -332,14 +297,14 @@
             return;
 
         const cake = this.state.app.cakeConfig.obj;
-        const candle = new CandleObject(this.props.models['candle2.glb'], this.state.app.global);
+        const candle = new CandleObject(this.props.models['flameless_candle.glb'], this.state.app.global);
         candle.position.set(cake.position.x, cake.position.y+0.75, cake.position.z+1);
         this.state.app.world.add(candle);
         this.state.app.candleBlessingConfig.candle = new CandleConfig();
         this.state.app.candleBlessingConfig.candle.obj = candle;
 
         this.state.app.renderer.renderLoop(); // perform a single render so that the controls can find the newly added candle in the scene.
-        this.state.app.controls.fitToSphere(candle.obj, true );
+        this.state.app.controls.fitToBox(candle.obj, true, { paddingLeft: 0, paddingRight: 0, paddingBottom: 0.1, paddingTop: 0.1 } );
 
         this.update({description: "בחר נר"});
         this.state.menuActor.send({ type: 'candle_and_blessing' });
@@ -424,6 +389,7 @@
 
         let res;
         try {
+          console.debug('[debug]','submitting blessing...', this.state.app.candleBlessingConfig.export());
           res = await API.addBlessing(cakeId, this.state.app.candleBlessingConfig.export());
           showSpinner = false;
           this.update({blessingCreationInProgress: false});
@@ -438,7 +404,7 @@
         
         this.state.app.candleBlessingConfig.text.blessing_id = blessing_id;
         this.state.app.candleBlessingConfig.candle.obj.obj.userData.blessing_id = blessing_id;
-        this.state.blessings.push(this.state.app.candleBlessingConfig.text);
+        this.state.blessings.push({...this.state.app.candleBlessingConfig.text, upvotes: this.state.app.candleBlessingConfig.upvotes});
 
         this.state.app.controls.setTarget(
           this.state.app.cameraStartTarget.x,

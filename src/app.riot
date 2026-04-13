@@ -100,18 +100,14 @@
         const cakeIdFromUrl = splittedCurrUrl[splittedCurrUrl.length-1];
 
         const modelPaths = [
-          '/candleless_cake3.glb',
-          '/candle2.glb',
           '/sparkler.glb',
           '/table_colored.glb',
           '/caketurntable.glb',
-          '/tempcake2.glb',
           '/pengucake.glb',
-          '/ballon.glb',
-          '/balloon2.glb',
           '/balloon3.glb',
-          '/tempflame.glb',
-          '/tempcake3.glb'
+          '/tempcake3-organized.glb',
+          '/flameless_candle.glb',
+          '/dogcake1.glb',
         ];
 
         const [_, cakeData, models] = await Promise.all([
@@ -137,21 +133,21 @@
 
         this.update({
           finishedLoading: true,
-          models: models
+          models: models,
         });
 
       },
       components: {
         canvas3d,
         progress_bar,
-        progress_cake
+        progress_cake,
       },
       state: {
         progVal: new BehaviorSubject(),
         models: [],
         finishedLoading: false,
         showFrontScreen: true,
-        cakeData: null
+        cakeData: null,
       }
     }
   </script>

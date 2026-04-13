@@ -1,0 +1,142 @@
+<cake-customization-drawer-content>
+
+    <c_button onclick={() => enterCategory('menu')} style="border-radius: 50%; overflow: auto; border: 1px solid purple; box-sizing: border-box;" if={state.category !== 'menu'}>
+        <i class="fas fa-home" style="font-size: 32px;"></i>
+    </c_button>
+
+    <template id="menu-options" if={state.category === 'menu'}>
+        <c_button onclick={() => enterCategory('cake')}>
+            <div class="button-img">
+                <img src="/images/balloons.png">
+            </div>
+            <div class="button-text">
+                עוגה
+            </div>
+        </c_button>
+
+        <c_button onclick={() =>enterCategory('decoration')}>
+            <div class="button-img">
+                <img src="/images/balloons.png">
+            </div>
+            <div class="button-text">
+                סביבה
+            </div>
+        </c_button>
+    </template>
+
+    <template id="decoration-options" if={state.category === 'decoration'}>
+        <c_button onclick="{() => selectDecoration('balloons')}" class={state.selectedDecoration === 'balloons' ? 'selected' : ''}>
+            <div class="button-img">
+                <img src="/images/balloons.png">
+            </div>
+            <div class="button-text">
+                בלונים
+            </div>
+        </c_button>
+
+        <c_button onclick="{() => selectDecoration('snow')}" class={state.selectedDecoration === 'snow' ? 'selected' : ''}>
+            <div class="button-img">
+                <img src="/images/snow.png">
+            </div>
+            <div class="button-text">
+                שלגי
+            </div>
+        </c_button>
+    </template>
+
+    <template id="cake-options" if={state.category === 'cake'}>
+        <c_button onclick="{() => {selectCake('layers')}}" class={state.selectedCakeType === 'layers' ? 'selected' : ''}>
+            <div class="button-img">
+                <img src="/images/layers_cake.png">
+            </div>
+            <div class="button-text">
+                שכבות
+            </div>
+        </c_button>
+
+        <c_button onclick="{() => {selectCake('penguin')}}" class={state.selectedCakeType === 'penguin' ? 'selected' : ''}>
+            <div class="button-img">
+                <img src="/images/penguin_cake.png">
+            </div>
+            <div class="button-text">
+                פנגווין
+            </div>
+        </c_button>
+        <c_button onclick="{() => {selectCake('dog')}}" class={state.selectedCakeType === 'dog' ? 'selected' : ''}>
+            <div class="button-img">
+                <img src="/images/dog_face.png">
+            </div>
+            <div class="button-text">
+                כלב
+            </div>
+        </c_button>
+    </template>
+
+    <style>
+        :host {
+            display: flex;
+            gap: 0.5em; 
+            width: 100%;
+            height: 100%;
+        }
+
+        c_button {
+            flex-shrink: 0;
+            width: 3.5em; 
+            height: 3.5em;
+
+            .button-text {
+                direction: rtl;
+                margin: auto;
+            }
+
+            .button-img {
+                img {
+                    width: 24px;
+                    height: 24px;
+                }
+            }
+
+            &.selected {
+                background: radial-gradient(circle,rgba(238, 174, 202, 1) 0%, rgba(139, 94, 168, 1) 53%, rgba(148, 187, 233, 1) 100%);
+            }
+        }
+        
+    </style>
+
+    <script>
+        import c_button from './button.riot';
+
+        export default {
+            onMounted(props) {
+                if (props?.selectedDecoration) {
+                    this.update({ selectedDecoration: props.selectedDecoration });
+                }
+                if (props?.selectedCakeType) {
+                    this.update({ selectedCakeType: props.selectedCakeType });
+                }
+            },
+            enterCategory(category) {
+                this.update({ category: category });
+            },
+            selectDecoration(option) {
+                console.log('[debug]', 'cake-customization-drawer-content', 'dispatchCustomEvent', "decorationChange", option);
+                this.update({ selectedDecoration: option });
+                this.root.dispatchEvent(new CustomEvent("decorationChange", {detail: option, bubbles: true}));
+            },
+            selectCake(option) {
+                console.log('[debug]', 'cake-customization-drawer-content', 'dispatchCustomEvent', "cakeTypeChange", option);
+                this.update({ selectedCakeType: option });
+                this.root.dispatchEvent(new CustomEvent("cakeTypeChange", {detail: option, bubbles: true}));
+            },
+            components: {
+                c_button,
+            },
+            state: {
+                category: 'menu',
+                selectedDecoration: "snow",
+                selectedCakeType: "layers",
+            }
+        }
+    </script>
+</cake-customization-drawer-content>

@@ -1,7 +1,7 @@
 <c-dialog>
   <div id="box" class="fade-in">
     <div id="slot-header" class="slot-wrapper">
-      <slot name="header"/>
+      <span id="slot-header-content"><slot name="header"/></span>
       <c_button id="close-dialog" onclick={e => dispatchCloseDialogEvent(0.2)}><i class="fa-solid fa-xmark"></i></c_button>
     </div>
     <div id="slot-body" class="slot-wrapper">
@@ -19,18 +19,21 @@
   
 
     #box {
-      z-index: 99;
+      z-index: 95;
 
       font-family: Varela;
       
-      background: rgba(255, 255, 255, 0.2);
+      background: RGBA(255,255,255,0.5);
+      background: radial-gradient(circle,rgba(254, 198, 221, 0.5) 0%, rgba(226, 193, 250, 0.5) 53%, rgba(184, 214, 249, 0.5) 100%);
       box-shadow: 0 4px 30px rgba(0, 0, 0, 0.15);
       $blur-size: 15px;
       backdrop-filter: blur($blur-size);
       -webkit-backdrop-filter: blur($blur-size);
 
       min-height: 100px;
-      min-width: 100px;
+      max-height: 90dvh;
+      min-width: 125px;
+      max-width: 90dvw;
       position: fixed;
       left: 50%;
       top: 50%;
@@ -45,7 +48,7 @@
       padding: 0.25em;
 
       @media (max-width: breakpoints.$tablet) {
-        width: 90vw;
+        width: 90dvw;
       }
     }
 
@@ -56,22 +59,49 @@
 
     #slot-header {
       font-size: 1.4em;
+      min-height: 1.5em;
       border-bottom: 2px solid rgba(180,25,150, 0.5);
       text-align: center;
       padding-bottom: 0.25em;
 
       display: flex;
       justify-content: center;
+      align-items: center;
+
+      #slot-header-content {
+        margin-right: auto;
+      }
 
       #close-dialog {
-        position: absolute;
-        left: 0.25em;
+        position: relative;
+        margin-right: auto;
+        width: 1.5em;
+        height: 1.5em;
+        
+        button {
+          border-top-left-radius: 12px;
+        }
+
+        i {
+          font-size: 1.25em;
+        }
       }
+    }
+
+    #slot-body {
+      overflow: auto;
+      padding: 0.25em;
+      box-sizing: border-box;
     }
 
     #slot-actions {
       position: relative;
       bottom: 0;
+      border-top: 2px solid rgba(180,25,150, 0.5);
+      padding: 0.25em;
+      box-sizing: border-box;
+      display: flex;
+      gap: 0.25em;
     }
 
 
@@ -113,7 +143,7 @@
         this.$("#box").classList.add("fade-out");
         
         setTimeout(() => {
-          this.root.dispatchEvent(new Event("close"))
+          this.root.dispatchEvent(new Event("close"));
         }, delay * 1000);
       },
       components: {

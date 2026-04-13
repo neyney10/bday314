@@ -10,35 +10,45 @@ export class ModelLoader
         dracoLoader.setDecoderPath( '/draco/' );
         loader.setDRACOLoader( dracoLoader );
         const models = {};
+        const promises = [];
+        let progress = {val: 0};
+
 
         for (let i = 0; i < modelPaths.length; i++)
         {
-            const m = await this.loadSingle(loader, modelPaths[i], progressCallback, i, modelPaths.length);
-            const filename = modelPaths[i].replace(/^.*[\\/]/, '');
-            models[filename] = m;
+            const m = this.loadSingle(
+                loader, 
+                modelPaths[i], 
+                progressCallback,
+                progress,
+                modelPaths.length
+            );
+
+            promises.push(m);
         }
 
-        if (Object.keys(models).length == modelPaths.length)
+        const modelArray = await Promise.all(promises);
+        for (let i = 0; i < modelArray.length; i++)
         {
-            return models;
+            const filename = modelPaths[i].replace(/^.*[\\/]/, '');
+            models[filename] = modelArray[i];
         }
-        else
-        {
-            throw new Error("Failed to load some models");
-        }
+
+        return models;
     }
 
-    async loadSingle(loader, path, progressCallback, index, len)
+    async loadSingle(loader, path, progressCallback, progress, len)
     {
         return new Promise((resolve, reject) => {
             loader.load(path, (gltf) => {
-                progressCallback((index+1)/len);
+                progress.val++;
+                progressCallback(progress.val/len);
                 //console.log('[debug', path, gltf);
                 gltf.scene.animations.push(...gltf.animations);
 
                 resolve(gltf.scene);
             }, (xhr) => {
-                progressCallback(((xhr.loaded / xhr.total) + index)/len)
+                progressCallback((progress.val + (xhr.loaded / xhr.total))/len)
             }, (err) => {
                 console.log( 'An error loading a model',path , err );
                 reject();

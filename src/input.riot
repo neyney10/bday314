@@ -1,0 +1,45 @@
+<c-input>
+    <input class={props.class} {...props}>
+        <slot/>
+    </input>
+
+    <style type="scss">
+        input {
+            font-size: 1em;
+            text-align: center;
+            width: 100%;
+            height: auto;
+
+            border-radius: 6px;
+            font-family: inherit;
+
+            background-color: RGBA(255,255,255,0.2);
+            color: black;
+            padding: 0.3em;
+            $blur-size: 7px;
+            backdrop-filter: blur($blur-size);
+            -webkit-backdrop-filter: blur($blur-size);
+            border-radius: 6px;
+
+            &:focus {
+                border: 2px double purple;
+                box-shadow: 0 0 15px rgba(0,0,0,0.5);
+                background-color: RGBA(255,255,255,0.5);
+            }
+        }
+
+    :host {
+        display: inline-flex;
+    }
+    </style>
+
+    <script>
+        export default {
+            onUpdated(props, state) {
+                // right after the component template is updated after an update call
+                //this.$('input').value = props.value; // keep the input value in sync with the props
+            },
+        }
+    </script>
+
+</c-input>

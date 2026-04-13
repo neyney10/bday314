@@ -59,6 +59,36 @@ export async function createCake(cakeData, title) {
 }
 
 
+export async function sendAdminLinkToEmail(id, admin_pin, email_address) {
+    const body = {
+        email_address: email_address,
+    };
+
+    const url = API_URL + `/cake/${id}-${admin_pin}/admin_link`;
+    console.log('send admin link', url, JSON.stringify(body));
+    try {
+        const response = await fetch(url, {
+            method: "POST",
+            headers: { 
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify(body),
+        });
+
+        if (!response.ok) {
+            throw new Error(`Response status: ${response.status}`);
+        }
+
+        const json = await response.json();
+        return json;
+
+    } catch (error) {
+        console.error(error.message);
+    }
+
+    return undefined;
+}
+
 export async function addBlessing(id, blessing) {
     const url = API_URL + `/cake/${id}/blessings`;
     console.log('add blessing', JSON.stringify(blessing));
@@ -98,9 +128,52 @@ export async function removeBlessing(id, admin_pin, blessing_id) {
 
 }
 
+
+export async function upvoteBlessing(id, blessing_id) {
+    const url = API_URL + `/cake/${id}/blessings/${blessing_id}`;
+    try {
+        const response = await fetch(url, {
+            method: "PATCH",
+        });
+
+        if (!response.ok) {
+            throw new Error(`Response status: ${response.status}`);
+        }
+
+        return 'success';
+
+    } catch (error) {
+        console.error(error.message);
+    }
+
+}
+
+export async function generateText() {
+    const url = API_URL + `/gen`;
+    try {
+        const response = await fetch(url, {
+            method: "GET",
+        });
+
+        if (!response.ok) {
+            throw new Error(`Response status: ${response.status}`);
+        }
+
+        const json = await response.json();
+        console.log('[API]', 'generateText', json);
+        return json;
+
+    } catch (error) {
+        console.error(error.message);
+    }
+}
+
 export default {
     getCake, 
     createCake,
     addBlessing,
-    removeBlessing
+    removeBlessing,
+    upvoteBlessing,
+    sendAdminLinkToEmail,
+    generateText
 }

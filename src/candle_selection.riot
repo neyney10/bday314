@@ -1,10 +1,10 @@
 <candle_selection>
   <div id="navigation">
     <button id="leftTypeBtn" onclick={dispatchEventPrev}>
-      <img src="/images/arrow_right.png" style="transform: rotateZ(180deg);">
+      <i class="fa-solid fa-caret-left fa-beat"></i>
     </button>
     <button id="rightTypeBtn" onclick={dispatchEventNext}>
-      <img src="/images/arrow_right.png">
+      <i class="fa-solid fa-caret-right fa-beat"></i>
     </button>
   </div>
 
@@ -24,15 +24,25 @@
 
   <!-- style -->
   <style type="scss">
+    @use "breakpoints";
+
     :host {
         z-index: 2;
         position: fixed;
-        width: 100%;
+        width: 50vw;
+        max-width: 512px;
         height: 50%;
+        left: calc(50vw - min(25vw, 256px));
         top: 25%;
         background-color: transparent;
         display: flex;
         flex-direction: column;
+
+        @media (max-width: breakpoints.$tablet) {
+          width: 100%;
+          max-width: none;
+          left: auto;
+        }
     }
 
     #navigation {
@@ -40,13 +50,20 @@
       flex-direction: row;
       justify-content: space-between;
       height: 100%;
+      margin-left: 0.5em;
+      margin-right: 0.5em;
 
         button {
+          font-size: 5em;
           height: 100%;
-          width: 20%;
+          width: 100%;
           max-width: 96px;
           max-height: 96px;
-          background: transparent;
+          background: rgba(255,255,255,0.3);
+          $blur-size: 2px;
+          backdrop-filter: blur($blur-size);
+          -webkit-backdrop-filter: blur($blur-size);
+          border-radius: 50%;
           padding: 0;
           border: 0;
           position: relative;
@@ -129,13 +146,19 @@
 
     #select {
       position: fixed;
-      width: 100%;
+      width: inherit;
+      max-width: 512px;
       bottom: 0;
 
       $blur-size: 15px;
       backdrop-filter: blur($blur-size);
       -webkit-backdrop-filter: blur($blur-size);
       background-color: RGBA(200,0,200, 0.3);
+
+      @media (max-width: breakpoints.$tablet) {
+        width: 100%;
+        max-width: none;
+      }
     }
 
   </style>
