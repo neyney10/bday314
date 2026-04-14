@@ -114,10 +114,17 @@
           preloadFonts, 
           API.getCake(cakeIdFromUrl),
           new ModelLoader().load(modelPaths, (progress) => {
+            if (progress > 0.9999) 
+              progress = 1;
+
             console.log('progress', progress);
+
             this.state.progVal.next(progress * 100);
           })
         ]);
+
+        // delay to show 100% progress for a bit
+        await new Promise(resolve => setTimeout(resolve, 250));
 
         this.state.cakeData = cakeData;
   

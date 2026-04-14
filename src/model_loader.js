@@ -8,6 +8,7 @@ export class ModelLoader
         const loader = new GLTFLoader();
         const dracoLoader = new DRACOLoader();
         dracoLoader.setDecoderPath( '/draco/' );
+        dracoLoader.workerLimit = 4;
         loader.setDRACOLoader( dracoLoader );
         const models = {};
         const promises = [];
@@ -39,16 +40,22 @@ export class ModelLoader
 
     async loadSingle(loader, path, progressCallback, progress, len)
     {
+        let currentModelProgress = 0;
+
         return new Promise((resolve, reject) => {
             loader.load(path, (gltf) => {
-                progress.val++;
+                progress.val += 1 - currentModelProgress;
+
                 progressCallback(progress.val/len);
-                //console.log('[debug', path, gltf);
                 gltf.scene.animations.push(...gltf.animations);
 
                 resolve(gltf.scene);
             }, (xhr) => {
-                progressCallback((progress.val + (xhr.loaded / xhr.total))/len)
+                if (xhr.loaded == xhr.total) return;
+                
+                progress.val += (xhr.loaded / xhr.total) - currentModelProgress;
+                currentModelProgress = xhr.loaded / xhr.total;
+                progressCallback(progress.val/len);
             }, (err) => {
                 console.log( 'An error loading a model',path , err );
                 reject();
