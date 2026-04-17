@@ -9,8 +9,8 @@
             <div class="vertical-line-arrow"></div>
 
             <div class="step-head" onclick={(e) => state.stepChangeObserver.next(1)}>
-                <div class="step-num"><i class="fa-solid fa-pencil"></i></div>
-                <div class="step-name">כיתוב</div>
+                <div class="step-num"><i class="fa-solid fa-sliders"></i></div>
+                <div class="step-name">עיצוב</div>
             </div>
         </template>
 
@@ -18,6 +18,15 @@
             <div class="vertical-line-arrow hide-line"></div>
 
             <div class="step-head" onclick={(e) => state.stepChangeObserver.next(2)}>
+                <div class="step-num"><i class="fa-solid fa-pencil"></i></div>
+                <div class="step-name">כיתוב</div>
+            </div>
+        </template>
+
+        <template if={props.steps >= 4}>
+            <div class="vertical-line-arrow hide-line"></div>
+
+            <div class="step-head" onclick={(e) => state.stepChangeObserver.next(3)}>
                 <div class="step-num"><i class="fa-solid fa-check"></i></div>
                 <div class="step-name">שיתוף</div>
             </div>
@@ -38,6 +47,10 @@
 
         <template if={state.step == 2}>
             <slot name="step3"/>
+        </template>
+
+        <template if={state.step == 3}>
+            <slot name="step4"/>
         </template>
     </div>
 
@@ -73,6 +86,10 @@
                     > i {
                         line-height: 1.75em
                     }
+                }
+
+                .step-name {
+                    font-size: 0.8em;
                 }
             }
 

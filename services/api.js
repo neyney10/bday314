@@ -29,7 +29,6 @@ export async function createCake(cakeData, title) {
     const body = {
         meta: {title: title},
         cake: cakeData,
-        blessings: []
     }
 
     const url = API_URL + "/cake";

@@ -108,6 +108,7 @@
           '/tempcake3-organized.glb',
           '/flameless_candle.glb',
           '/dogcake1.glb',
+          '/elevated_photo_cake_rect.glb'
         ];
 
         const [_, cakeData, models] = await Promise.all([
@@ -123,12 +124,16 @@
           })
         ]);
 
-        // delay to show 100% progress for a bit
-        await new Promise(resolve => setTimeout(resolve, 250));
-
-        this.state.cakeData = cakeData;
+        this.update({
+          finishedLoading: true,
+          models: models,
+          cakeData: cakeData,
+        });
   
         console.log('all models loaded, app is ready');
+
+        // delay to show 100% progress for a bit
+        await new Promise(resolve => setTimeout(resolve, 250));
 
         this.$("#front-screen").classList.add("fade-out");
 
@@ -136,12 +141,7 @@
           this.update({
             showFrontScreen: false,
           });
-        }, 2000);
-
-        this.update({
-          finishedLoading: true,
-          models: models,
-        });
+        }, 1000);
 
       },
       components: {

@@ -2,9 +2,6 @@ import * as THREE from 'three';
 import CameraControls from 'camera-controls';
 CameraControls.install( { THREE: THREE } );
 
-import { BloomEffect, EffectComposer, EffectPass, RenderPass } from "postprocessing";
-
-
 export class Bday314Renderer
 {
     constructor(width, height, devicePixelRatio, scene, camera, world)

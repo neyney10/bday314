@@ -165,6 +165,20 @@ export class CandleObject extends Bday314Object
 
         const flame = new FlameWithShaderObject(threeobj, global);
         this.addChild(flame);
+
+        
+        
+        const box = new THREE.Box3().setFromObject(this.obj);
+        const size = new THREE.Vector3();
+        box.getSize(size);
+
+        const light = new THREE.PointLight( 0xffddff, 0.05, 0.5);
+        
+        this.obj.add( light );
+        light.position.set( 0, size.y/2, 0);
+        light.updateMatrixWorld(true);
+
+
     }
 
     onCreate()

@@ -17,7 +17,8 @@
     oncakeCreated={handleCakeCreated}
     ondecorationChange={onDecorationChange}
     oncakeTypeChange={onCakeTypeChange}
-    ontitleChanged={setCakeTitle}>
+    ontitleChanged={setCakeTitle}
+    onimageSelectedForPhotoCake={setImagePhotoCake}>
   </cake_menu>
   <candle_selection if={getStateName() == 'candleSelection'} 
     candleTypes={state.candleTypes}
@@ -176,6 +177,13 @@
         this.state.menuActor.subscribe((newMenuState) => {
             this.update({menuState: newMenuState});
             console.log("menu state:", newMenuState.value, this.getStateName()); 
+
+            if (this.getStateName() == 'mainMenu')
+            {
+              const otherCandles = this.state.app.cakeConfig.obj.children.filter(c => c.name =='candle');
+              for (const c of otherCandles)
+                c.setOpacity(1);
+            }
         });
         this.state.menuActor.start();
 
@@ -223,6 +231,13 @@
           this.state.app.changeCake(cakeData.cake.type);
           this.state.app.setDecoration(cakeData.cake.decoration);
           this.state.app.setTitleText(cakeData.meta.title);
+          if (cakeData.cake.type == 'photo')
+          {
+            const base_url = "https://ik.imagekit.io/9no6trsl28/cakephotos";
+            const photo_url = `${base_url}/${cakeData.meta.uuid}`;
+
+            this.state.app.loadTextureIntoPhotoCake(photo_url);
+          }
 
           State.cake_uuid.set(cakeData.meta.uuid);
           const currUrl = window.location.href;
@@ -266,6 +281,9 @@
       },
       setCakeTitle(e) {
         this.state.app.setTitleText(e.detail);
+      },
+      setImagePhotoCake(e) {
+        this.state.app.loadTextureIntoPhotoCake(e.detail);
       },
       changeCandleType(e) {
         this.state.app.changeCandle(e.detail);
@@ -370,6 +388,12 @@
         this.state.app.candleBlessingConfig.candle.type = candleData.type.name;
         this.state.app.candleBlessingConfig.candle.colors = candleData.options;
         console.log('selectedCandle',  candleData.options, this.state.app.candleBlessingConfig.candle);
+
+        // semi-transparent other candles;
+        const otherCandles = this.state.app.cakeConfig.obj.children.filter(c => c.name =='candle');
+        for (const c of otherCandles)
+          c.setOpacity(0.15);
+
         this.state.app.selectedCandle(this.state.menuActor);
         this.update({description: "בחר מיקום לנר"});
       },

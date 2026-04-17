@@ -1,18 +1,16 @@
 import * as THREE from 'three';
-import { computeBoundsTree, acceleratedRaycast, disposeBoundsTree } from 'three-mesh-bvh';
+import { acceleratedRaycast, computeBoundsTree, disposeBoundsTree } from 'three-mesh-bvh';
 THREE.BufferGeometry.prototype.computeBoundsTree = computeBoundsTree;
 THREE.BufferGeometry.prototype.disposeBoundsTree = disposeBoundsTree;
 THREE.Mesh.prototype.raycast = acceleratedRaycast;
 
-import { Text as TrText } from 'troika-three-text';
-import { CakeObject, CandleObject, CandlePlacementObject, Bday314Object, FlameWithShaderObject, cloneWithMeshes, BalloonObject, BalloonsObject } from './object.js';
-import { Bday314Renderer } from './renderer.js';
-import { Bday314World } from './world.js';
 import { randFloat } from 'three/src/math/MathUtils.js';
-import { intersectPosTop2Bot, randomizeMatrix } from './threejs_util.js';
-import { RotateAnimation } from './intro_animation.js';
+import { Text as TrText } from 'troika-three-text';
 import { findPlacements } from './algo.js';
-import { getFlameMaterial } from './flame.js';
+import { BalloonObject, Bday314Object, CakeObject, CandleObject, CandlePlacementObject } from './object.js';
+import { Bday314Renderer } from './renderer.js';
+import { intersectPosTop2Bot, randomizeMatrix } from './threejs_util.js';
+import { Bday314World } from './world.js';
 
 
 export class Canvas3dApp 
@@ -40,25 +38,6 @@ export class Canvas3dApp
 
     init(models)
     {
-        // light
-        /*const light1 = new THREE.DirectionalLight(0x00ff00, 2.5);
-        light1.position.z = 5;
-        this.scene.add(light1);
-
-        const light2 = new THREE.DirectionalLight(0xff0000, 1.5);
-        light2.position.z = 5;
-        light2.position.x = 2;
-        this.scene.add(light2);
-
-        const light3 = new THREE.DirectionalLight(0x0000ff, 2.5);
-        light3.position.z = 5;
-        light3.position.x = 4;
-        this.scene.add(light3);
-
-        const light4 = new THREE.DirectionalLight(0xffffff, 3);
-        light4.position.set(3, 0.5, 5);
-        this.scene.add(light4);
-        */
 
         const light5 = new THREE.DirectionalLight(0xffffff, 3);
         light5.position.set(-1, 0.5, 5);
@@ -72,10 +51,10 @@ export class Canvas3dApp
         this.scene.add(lightAmbient);
 
 
-        /*const gridHelper = new THREE.GridHelper(10, 10, 0xff0000, 0x0000ff);
+        /*const gridHelper = new THREE.GridHelper(10, 100, 0xff0000, 0x0000ff);
         this.scene.add(gridHelper);
 
-        const gridHelper2 = new THREE.GridHelper(10, 10, 0x00ff00, 0x0000ff);
+        const gridHelper2 = new THREE.GridHelper(10, 100, 0x00ff00, 0x0000ff);
         gridHelper2.rotateX(Math.PI / 2);
         this.scene.add(gridHelper2);*/
 
@@ -134,30 +113,8 @@ export class Canvas3dApp
         cakeTurnTable.obj.scale.setScalar(0.5);
         cakeTurnTable.obj.position.set(0,-0.3,0);
         this.world.add(cakeTurnTable);
-
-        // temp cake
-        /*console.log('tempcake2', models['pengucake.glb']);
-        const tempCake = new CakeObject(models['pengucake.glb'], this.global);
-        tempCake.position.set(2,0,2);
-        this.world.add(tempCake);
-        console.log("[debug]", "tempcake", tempCake.obj.children);
-        console.log("[debug]", "tempcake", tempCake.top);*/
-
-
-        // temp flame
-        /*console.log('flame', models['tempflame.glb']);
-        const flame = new FlameObject(models['tempflame.glb'], this.global);
-        flame.position.set(1.5,1,1);
-        console.log('[debug]', 'flame',  flame.obj);
-        this.world.add(flame);*/
-
-        // temp flame with shader
-        //const flame = new FlameWithShaderObject(models['tempflame.glb'], this.global);
-        //this.world.add(flame);
-        /*animation:
-        flameMaterials[0].uniforms.time.value = time;
-        */
-
+        
+        
 
 
     
@@ -241,8 +198,9 @@ export class Canvas3dApp
         {
             const [x, z] = placementPoints[i];
             
-            const intersects = intersectPosTop2Bot(cakeIntersectObjs, new THREE.Vector3(x, 5, z));
-            const y = intersects.map(int => int.point.y).reduce((a, b) => Math.max(a, b), -Infinity) - cake.position.y;
+            const intersects = intersectPosTop2Bot(cakeIntersectObjs, new THREE.Vector3(x, 2.5, z));
+            console.log('intersects', [x, z], intersects);
+            const y = intersects.map(int => int.point.y).reduce((a, b) => Math.max(a, b), -Infinity);
             console.log("placement y", y);
 
             const placementMesh = new THREE.Mesh(
@@ -251,11 +209,10 @@ export class Canvas3dApp
             );
             
             placementMesh.layers.enable(1);
-            placementMesh.scale.y = 0.4;
-            placementMesh.position.set(x, y, z);
+            placementMesh.scale.y = 0.5;
+            placementMesh.position.copy(cake.obj.worldToLocal(new THREE.Vector3(x, y+0.01, z)));
             placementMesh.parent = cake.obj;
             const placementObj = new CandlePlacementObject(placementMesh, this.global);
-            //placementObj.onCreate();
             
             cake.addChild(placementObj);
         }
@@ -416,15 +373,15 @@ export class Canvas3dApp
   
             if (text.length > 45)
             {
-                this.global.cakeConfig.titleObj.obj.fontSize = 0.08;
+                this.global.cakeConfig.titleObj.obj.fontSize = 0.09;
             }
             else if (text.length > 25)
             {
-                this.global.cakeConfig.titleObj.obj.fontSize = 0.09;
+                this.global.cakeConfig.titleObj.obj.fontSize = 0.10;
             }
             else if (text.length > 12)
             {
-                this.global.cakeConfig.titleObj.obj.fontSize = 0.1;
+                this.global.cakeConfig.titleObj.obj.fontSize = 0.11;
             }
             
             this.global.cakeConfig.titleObj.obj.sync();
@@ -443,7 +400,7 @@ export class Canvas3dApp
             cakeTitleText.color = 0xff5588;
             cakeTitleText.outlineBlur = "3%";
             cakeTitleText.position.y = this.global.cakeConfig.obj.top.position.y + 0.85;
-            cakeTitleText.maxWidth = 1.75;
+            cakeTitleText.maxWidth = 1.72;
             cakeTitleText.textAlign = 'center';
             cakeTitleText.sync();
 
@@ -479,6 +436,22 @@ export class Canvas3dApp
         this.candleBlessingConfig.candle.obj = candle;
         this.world.add(this.candleBlessingConfig.candle.obj);
     }
+
+    async loadTextureIntoPhotoCake(image)
+    {
+        console.debug('[debug]', 'loadTextureIntoPhotoCake', image);
+        const loader = new THREE.TextureLoader();
+
+        const texture = await loader.loadAsync(image);
+        texture.wrapS = THREE.RepeatWrapping;
+        texture.wrapT = THREE.RepeatWrapping;
+        //texture.rotation = Math.PI / 2;
+
+        const material = new THREE.MeshStandardMaterial( { map:texture } );
+        material.side = THREE.DoubleSide;
+        this.cakeConfig.obj.top.material = material;
+        this.cakeConfig.obj.top.material.needsUpdate = true;
+    }
 }
 
 
@@ -494,6 +467,9 @@ function cakeModelFromType(type) {
         break;
     case "dog":
         modelName = 'dogcake1.glb';
+        break;
+    case "photo":
+        modelName = 'elevated_photo_cake_rect.glb';
         break;
     };
 

@@ -3,7 +3,7 @@
 	<head>
 		<meta charset="UTF-8">
 		<meta http-equiv="X-UA-Compatible" content="IE=edge">
-		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<meta name="viewport" content="width=device-width, initial-scale=3.0">
 		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
 		<link rel="icon" type="image/png" href="/public/favicon.ico">
 		<title>עוגה וירטואלית</title>
@@ -13,18 +13,16 @@
 				background: rgb(238,174,202); 
 				background: radial-gradient(circle, rgba(238,174,202,1) 0%, rgba(148,187,233,1) 100%);
 			}
+
+			#root {
+				width: 100dvw;
+				height: 100dvh;
+			}
 		</style>
 	</head>
 
 	<body>
 		<div id="root"></div>
-		<script type="module">
-			/** Load riot.js **/
-			import * as riot from 'riot'
-			import App from './src/app.riot'
-
-			const mountApp = riot.component(App)
-			mountApp(document.getElementById('root'))
-		</script>
+		<script type="module" src="public/index.js"></script>
 	</body>
 </html>

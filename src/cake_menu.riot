@@ -14,8 +14,8 @@
         </div>
     </div>
 
-    <div class="wrapper {state.stepChangeObserver.value == 1 ? 'wrapper-stepper' : ''}" if={!state.isWelcomeScreenVisible}>
-        <stepper steps={3} stepChangeObserver={state.stepChangeObserver}>
+    <div class="wrapper {state.stepChangeObserver.value == 2 ? 'wrapper-stepper' : ''}" if={!state.isWelcomeScreenVisible}>
+        <stepper steps={4} stepChangeObserver={state.stepChangeObserver}>
             <template slot="step1">
                 <div class="step1-content">
                     
@@ -30,8 +30,20 @@
             </template>
 
             <template slot="step2">
-                <div>
-                    <div class="step2-content">
+                <template if={state.cakeCustomizations.selectedCakeType == 'photo'}>
+                    התאימו אישית את העוגה שלכם על ידי בחירת תמונה לבחירתכם שתוצג על העוגה כמאין הדפס.
+                    <c_button>לחצו לבחירת תמונה</c_button>
+                    <input type="file" id="imageUpload" accept="image/*" onchange={onImageFileSelect}>
+                    <c_button><i class="fa-solid fa-circle-info"></i></c_button>
+                    <c_button onclick={rotateImage}><i class="fa-solid fa-rotate"></i></c_button>
+                </template>
+
+                <c_button class="stepper-next-button" onclick={e => stepperNext(2)}>המשך</c_button>
+            </template>
+
+            <template slot="step3">
+                <div style="height: 100%;">
+                    <div class="step3-content">
                         <p>כתבו משפט או ברכה שיופיעו מעל העוגה.</p>
                         <p>או העזרו בבינה מלאכותית שתצור עבורכם ברכה.</p>
                         <div id="cakeTitleWrapper">
@@ -46,12 +58,12 @@
                             <button class="chip">רישמי</button>
                         </div>
             
-                        <c_button class="stepper-next-button" onclick={e => stepperNext(2)}>המשך</c_button>
+                        <c_button class="stepper-next-button" onclick={e => stepperNext(3)}>המשך</c_button>
                     </div>
                 </div>
             </template>
 
-            <template slot="step3">
+            <template slot="step4">
                 <p>
                     הכל מוכן לחגיגה! <br> 
                     אז שנתחיל אותה?
@@ -226,7 +238,7 @@
         }
 
 
-        .step2-content {
+        .step3-content {
             @media (max-width: breakpoints.$tablet) {
                 background: radial-gradient(circle,rgba(254, 198, 221, 0.5) 0%, rgba(226, 193, 250, 0.5) 53%, rgba(184, 214, 249, 0.5) 100%);
                 $blur-size: 15px;
@@ -302,11 +314,15 @@
             async createCake() {
                 this.update({cakeCreationInProgress: true});
 
+                const base64image = await objectUrlToBase64(this.state.cakeCustomizations.photo);
+                console.log('base64image', base64image);
+
                 const cakeData = {
                     type: this.state.cakeCustomizations.selectedCakeType,
                     decoration: {
                         type: this.state.cakeCustomizations.selectedDecoration
-                    }
+                    },
+                    photo: base64image
                 };
                 const res = await API.createCake(cakeData, this.state.cakeTitle);
                 if (res)
@@ -317,6 +333,7 @@
                     this.update({created: true});
                     State.cake_uuid.set(res.uuid);
                     State.admin_pin.set(res.admin_pin);
+                    URL.revokeObjectURL(this.state.cakeCustomizations.photo);
                 }
                 else
                 {
@@ -351,6 +368,29 @@
                 this.update({cakeTitle: e.target.value});
                 this.dispatchCustomEvent('titleChanged', this.state.cakeTitle);
             },
+            async onImageFileSelect(e) {
+                const file = e.target.files[0]; // Get the uploaded file
+                if (file) {
+                    if (!(file instanceof Blob)) {
+                        console.error("The 'file' variable is not a Blob or File object.", file);
+                    } else if (typeof window.URL.createObjectURL !== 'function') {
+                        console.error("URL.createObjectURL is not supported or has been overwritten.");
+                    }
+                    
+                    if (this.state.cakeCustomizations.photo)
+                        URL.revokeObjectURL(this.state.cakeCustomizations.photo);
+                        
+                    this.state.cakeCustomizations.photo = await compressAndConvert(file);
+                    this.dispatchCustomEvent('imageSelectedForPhotoCake', this.state.cakeCustomizations.photo);
+                }
+            },
+            async rotateImage(e) {
+                
+                
+                //let image = await fetchURL(this.state.cakeCustomizations.photo);
+                //this.state.cakeCustomizations.photo = URL.createObjectURL(image.toBlob('image/png'));
+                this.dispatchCustomEvent('imageSelectedForPhotoCake', this.state.cakeCustomizations.photo);
+            },
             stepperNext(step) {
                 this.state.stepChangeObserver.next(step);
             },
@@ -372,11 +412,45 @@
                 cakeCustomizations: {
                     selectedDecoration: "snow",
                     selectedCakeType: "layers",
+                    photo: undefined
                 },
                 cakeCreationInProgress: false,
                 stepChangeObserver: new BehaviorSubject(0),
                 isAboutDialogVisible: false,
             }
+        }
+
+
+        async function objectUrlToBase64(objUrl) {
+            // 1. Fetch the actual Blob data from the internal URL
+            const response = await fetch(objUrl);
+            const blob = await response.blob();
+
+            // 2. Use FileReader to convert that Blob to a Data URL (Base64)
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onloadend = () => resolve(reader.result.split(',')[1]); // result includes the data:image/... prefix
+                reader.onerror = reject;
+                reader.readAsDataURL(blob);
+            });
+        }
+
+        async function compressAndConvert(imageFile, mimeType='image/webp') {
+            // the lib can by dynmaically imported and save 20kb gzipped on initial load
+            const { default: imageCompression } = await import("browser-image-compression");
+
+            const options = {
+                maxSizeMB: 0.75,
+                maxWidthOrHeight: 1600,
+                initialQuality: 0.92,
+                useWebWorker: false,
+                fileType: mimeType
+            }
+            const compressedImage = await imageCompression(imageFile, options);
+            const objectURLImage = window.URL.createObjectURL(compressedImage);
+            console.log(`compressedFile size ${compressedImage.size / 1024 / 1024} MB`);
+
+            return objectURLImage;
         }
     </script>
 
