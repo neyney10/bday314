@@ -31,11 +31,14 @@
 
             <template slot="step2">
                 <template if={state.cakeCustomizations.selectedCakeType == 'photo'}>
-                    התאימו אישית את העוגה שלכם על ידי בחירת תמונה לבחירתכם שתוצג על העוגה כמאין הדפס.
-                    <c_button>לחצו לבחירת תמונה</c_button>
-                    <input type="file" id="imageUpload" accept="image/*" onchange={onImageFileSelect}>
-                    <c_button><i class="fa-solid fa-circle-info"></i></c_button>
-                    <c_button onclick={rotateImage}><i class="fa-solid fa-rotate"></i></c_button>
+                    <p> התאימו אישית את העוגה שלכם על ידי בחירת תמונה לבחירתכם שתוצג על העוגה כמאין הדפס.</p>
+                    <div style="display: flex; margin-bottom: 0.5em; gap: 0.5em">
+                        <c_button onclick={e => this.$('#image-upload').click()} style="width: 5em;"><i class="fa-solid fa-upload"></i> <span style="margin-right: 0.5em; font-size: 1.15em; border-right: solid 1px rgb(180, 25, 150); padding-right: 0.35em;">העלה</span></c_button>
+                        <input type="file" id="image-upload" accept="image/*" onchange={onImageFileSelect} style="display: none;">
+                        <c_button id="image-upload-information-button" onclick={e => update({isImageUploadInformationDialogVisible: true})}><i class="fa-solid fa-circle-info"></i></c_button>
+                        <c_button onclick={rotateImage} disabled><i class="fa-solid fa-rotate"></i></c_button>
+                    </div>
+
                 </template>
 
                 <c_button class="stepper-next-button" onclick={e => stepperNext(2)}>המשך</c_button>
@@ -75,10 +78,21 @@
         </stepper>
     </div>
 
-    <drawer data={state.cakeCustomizations} if={state.stepChangeObserver.value == 0 && state.isWelcomeScreenVisible == false}
+    <drawer if={state.stepChangeObserver.value == 0 && state.isWelcomeScreenVisible == false}
         oncakeTypeChange={(e) => {update({cakeCustomizations: {...state.cakeCustomizations, selectedCakeType: e.detail}})}}
         ondecorationChange={(e) => {update({cakeCustomizations: {...state.cakeCustomizations, selectedDecoration: e.detail}})}}
         >
+        <template slot="content">
+            <cake_customization_drawer_content data={state.cakeCustomizations}></cake_customization_drawer_content>
+        </template>
+    </drawer>
+
+    <drawer if={state.stepChangeObserver.value == 1 && state.isWelcomeScreenVisible == false && state.cakeCustomizations.selectedCakeType == 'layers'}
+        ondesignChange={(e) => {}}
+        >
+        <template slot="content">
+            <cake_design_drawer_content data={state.cakeCustomizations}></cake_design_drawer_content>
+        </template>
     </drawer>
 
     <c_dialog if={state.isAboutDialogVisible} onclose={hideAboutDialog}>
@@ -101,6 +115,22 @@
         </template>
     </c_dialog>
 
+    <c_dialog if={state.isImageUploadInformationDialogVisible} onclose={hideImageUploadInformationDialog}>
+        <div id="image-upload-information-dialog-header" slot="header">
+            לגבי העלאות של תמונות
+        </div>
+
+        <template slot="body">
+            <div id="image-upload-information-dialog-body">
+                <p>ישנן מספר מגבלות להעלאה של תמונות, במידה והתמונה חורגת מהן, היא תכווץ על מנת להתאים לדרישות.</p>
+                <p>1. על התמונה להתאים למסגרת רזולוציה של 1600x1600.<br>
+                2. על גודל קובץ התמונה לא לחרוג מ750 קילובייטים. <br>
+                3. אין להעלות תמונות המוגנות בזכויות יוצרים או ללא רשות של הגורמים הרלוונטים.
+                </p>
+            </div>
+        </template>
+    </c_dialog>
+
 
 
 
@@ -108,6 +138,7 @@
         @use "breakpoints";
 
         :host {
+            min-width: min-content;
             width: 28dvw;
             height: 95dvh;
             position: fixed;
@@ -298,6 +329,8 @@
         import spinner from './progress_spinner.riot';
         import c_dialog from './dialog.riot';
         import drawer from './drawer.riot';
+        import cake_customization_drawer_content from './cake_customization_drawer_content.riot';
+        import cake_design_drawer_content from './cake_design_drawer_content.riot';
         
         import * as API from '/services/api.js';
         import State from '/services/state.js';
@@ -329,10 +362,13 @@
                 {
                     console.log('created cake', res);
                     this.dispatchCakeCreatedEvent({cake: cakeData, title: this.state.cakeTitle});
-                    window.history.pushState("", "", `/cake/${res.uuid}-${res.admin_pin}`);
+                    window.history.replaceState("", "", `/cake/${res.uuid}`);
                     this.update({created: true});
                     State.cake_uuid.set(res.uuid);
                     State.admin_pin.set(res.admin_pin);
+                    State.admin_token.set(res.admin_token);
+                    localStorage.setItem(`cake-${res.uuid}`, res.admin_pin);
+
                     URL.revokeObjectURL(this.state.cakeCustomizations.photo);
                 }
                 else
@@ -379,7 +415,7 @@
                     
                     if (this.state.cakeCustomizations.photo)
                         URL.revokeObjectURL(this.state.cakeCustomizations.photo);
-                        
+
                     this.state.cakeCustomizations.photo = await compressAndConvert(file);
                     this.dispatchCustomEvent('imageSelectedForPhotoCake', this.state.cakeCustomizations.photo);
                 }
@@ -397,13 +433,18 @@
             hideAboutDialog() {
                 this.update({isAboutDialogVisible: false});
             },
+            hideImageUploadInformationDialog() {
+                this.update({isImageUploadInformationDialogVisible: false});
+            },
             components: {
                 stepper,
                 c_button,
                 c_input,
                 spinner,
                 c_dialog,
-                drawer
+                drawer,
+                cake_customization_drawer_content,
+                cake_design_drawer_content,
             },
             state: {
                 isWelcomeScreenVisible: true,
@@ -417,6 +458,7 @@
                 cakeCreationInProgress: false,
                 stepChangeObserver: new BehaviorSubject(0),
                 isAboutDialogVisible: false,
+                isImageUploadInformationDialogVisible: false,
             }
         }
 

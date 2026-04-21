@@ -1,0 +1,97 @@
+<cake-customization-drawer-content>
+
+    <c_button onclick={() => enterCategory('menu')} style="border-radius: 50%; overflow: auto; border: 1px solid purple; box-sizing: border-box;" if={state.category !== 'menu'}>
+        <i class="fas fa-home" style="font-size: 32px;"></i>
+    </c_button>
+
+    <template id="menu-options" if={state.category === 'menu'}>
+        <c_button onclick={() => enterCategory('design')}>
+            <div class="button-img">
+                <img src="/images/balloons.png">
+            </div>
+            <div class="button-text">
+                עוגה
+            </div>
+        </c_button>
+    </template>
+
+    <template id="design-options" if={state.category === 'design'}>
+        <c_button onclick="{() => selectDesign('basic')}" class={state.selectedDesign === 'basic' ? 'selected' : ''}>
+            <div class="button-img">
+                <img src="/images/balloons.png">
+            </div>
+            <div class="button-text">
+                בסיסי
+            </div>
+        </c_button>
+
+        <c_button onclick="{() => selectDesign('chocolate')}" class={state.selectedDesign === 'chocolate' ? 'selected' : ''}>
+            <div class="button-img">
+                <img src="/images/snow.png">
+            </div>
+            <div class="button-text">
+                שוקולד
+            </div>
+        </c_button>
+    </template>
+
+
+    <style>
+        :host {
+            display: flex;
+            gap: 0.5em; 
+            width: 100%;
+            height: 100%;
+        }
+
+        c_button {
+            flex-shrink: 0;
+            width: 3.5em; 
+            height: 3.5em;
+
+            .button-text {
+                direction: rtl;
+                margin: auto;
+            }
+
+            .button-img {
+                img {
+                    max-width: 3em;
+                    height: 24px;
+                }
+            }
+
+            &.selected {
+                background: radial-gradient(circle,rgba(238, 174, 202, 1) 0%, rgba(139, 94, 168, 1) 53%, rgba(148, 187, 233, 1) 100%);
+            }
+        }
+        
+    </style>
+
+    <script>
+        import c_button from './button.riot';
+
+        export default {
+            onMounted(props) {
+                if (props?.selectedDesign) {
+                    this.update({ selectedDesign: props.selectedDesign });
+                }
+            },
+            enterCategory(category) {
+                this.update({ category: category });
+            },
+            selectDesign(option) {
+                console.log('[debug]', 'cake-design-drawer-content', 'dispatchCustomEvent', "selectCakeDesign", option);
+                this.update({ selectedDesign: option });
+                this.root.dispatchEvent(new CustomEvent("designChange", {detail: option, bubbles: true}));
+            },
+            components: {
+                c_button,
+            },
+            state: {
+                category: 'menu',
+                selectedDesign: "basic",
+            }
+        }
+    </script>
+</cake-customization-drawer-content>

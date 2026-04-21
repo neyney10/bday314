@@ -117,26 +117,6 @@ export class CakeObject extends Bday314Object
             if (child.name == 'top')
                 this.top = child;
 
-            if (child.name.startsWith('layer'))
-            {
-                //console.debug('[debug]', 'CakeObject', 'found layer:', child.name);
-                if (child.name.indexOf('_') == -1)
-                    child.material.color = new THREE.Color(0x7e6048);
-                else child.material.color = new THREE.Color(0x98806d);
-            }
-
-            if (child.name.startsWith('Star'))
-            {
-                //console.debug('[debug]', 'CakeObject', 'found star:', child.name);
-                child.material.color = new THREE.Color(0x98806d);
-            }
-
-            if (child.name.startsWith('icing'))
-            {
-                //console.debug('[debug]', 'CakeObject', 'found star:', child.name);
-                child.material.color = new THREE.Color(0x654d3a);
-            }
-
             if (child.isMesh) {
                 const m = child;
                 m.geometry.computeBoundsTree();
@@ -150,7 +130,104 @@ export class CakeObject extends Bday314Object
         const rotationsPerMinute = 0.5;
         this.rotation.y += ((rotationsPerMinute/60)*Math.PI*2) * deltaTime;
     }
+}
 
+export class LayersCakeObject extends CakeObject
+{
+    constructor(threeobj, global)
+    {
+        super(threeobj, global);
+        this.layers = [];
+        this.creamLayers = [];
+        this.stars = [];
+        this.icings = [];
+        
+        this.obj.traverse((child) => {
+            if (child.name == 'top')
+                this.top = child;
+
+            if (child.name.startsWith('layer'))
+            {
+                //console.debug('[debug]', 'CakeObject', 'found layer:', child.name);
+                if (child.name.indexOf('_') == -1)
+                     this.layers.push(child);
+                else this.creamLayers.push(child);
+            }
+
+            if (child.name.startsWith('Star'))
+            {
+                //console.debug('[debug]', 'CakeObject', 'found star:', child.name);
+                this.stars.push(child);
+            }
+
+            if (child.name.startsWith('icing'))
+            {
+                //console.debug('[debug]', 'CakeObject', 'found star:', child.name);
+                this.icings.push(child);
+            }
+        });
+
+    }
+
+
+    changeDesign(style) 
+    {
+        switch (style)
+        {
+            case 'basic':
+                this.changeDesignToBasic();
+                break;
+            case 'chocolate':
+                this.changeDesignToChocolate();
+                break;
+        }
+    }
+
+    changeDesignToBasic()
+    {
+        for (const layer of this.creamLayers)
+        {
+            layer.material.color = new THREE.Color(0xeeeeee);
+        }
+
+        for (const layer of this.layers)
+        {
+            layer.material.color = new THREE.Color(0xfcfcd5);
+        }
+
+        for (const star of this.stars)
+        {
+            star.material.color = new THREE.Color(0xffffff);
+        }
+
+        for (const icing of this.icings)
+        {
+            icing.material.color = new THREE.Color(0xA54d3a);
+        }
+    }
+
+    changeDesignToChocolate()
+    {
+        for (const layer of this.creamLayers)
+        {
+            layer.material.color = new THREE.Color(0x7e6048);
+        }
+
+        for (const layer of this.layers)
+        {
+             layer.material.color = new THREE.Color(0x98806d);
+        }
+
+        for (const star of this.stars)
+        {
+            star.material.color = new THREE.Color(0x98806d);
+        }
+
+        for (const icing of this.icings)
+        {
+            icing.material.color = new THREE.Color(0x654d3a);
+        }
+    }
 }
 
 
@@ -167,8 +244,8 @@ export class CandleObject extends Bday314Object
         this.addChild(flame);
 
         
-        
-        const box = new THREE.Box3().setFromObject(this.obj);
+        // light causes performance issues.
+        /*const box = new THREE.Box3().setFromObject(this.obj);
         const size = new THREE.Vector3();
         box.getSize(size);
 
@@ -176,7 +253,7 @@ export class CandleObject extends Bday314Object
         
         this.obj.add( light );
         light.position.set( 0, size.y/2, 0);
-        light.updateMatrixWorld(true);
+        light.updateMatrixWorld(true);*/
 
 
     }

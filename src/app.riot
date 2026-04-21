@@ -81,6 +81,7 @@
     import { ModelLoader } from './model_loader.js';
     import { preloadFont } from 'troika-three-text';
     import * as API from '/services/api.js';
+    import State from '/services/state.js';
 
 
 
@@ -98,6 +99,34 @@
         const currUrl = window.location.href;
         const splittedCurrUrl = currUrl.split('/');
         const cakeIdFromUrl = splittedCurrUrl[splittedCurrUrl.length-1];
+        const getCake = new Promise(async (resolve, reject) => {
+          try {
+            const splittedCakeId = cakeIdFromUrl.split('-');
+            const cakeIdOnly = splittedCakeId[0];
+            let adminPin = splittedCakeId.length > 1 ? splittedCakeId[1] : null;
+            if (!adminPin)
+              adminPin = localStorage.getItem(`cake-${cakeIdOnly}`);
+            else window.history.replaceState("", "", `/cake/${cakeIdOnly}`);
+
+            let idQuery = cakeIdOnly;
+            if (adminPin)
+              idQuery += `-${adminPin}`;
+
+            const cakeData = await API.getCake(idQuery);
+            if (cakeData?.meta?.admin_token) {
+              State.admin_token.set(cakeData.meta.admin_token);
+
+              if (adminPin)
+              {
+                State.admin_pin.set(adminPin);
+                localStorage.setItem(`cake-${cakeIdOnly}`, adminPin);
+              }
+            }
+            resolve(cakeData);
+          } catch (err) {
+            reject(err);
+          }
+        });
 
         const modelPaths = [
           '/sparkler.glb',
@@ -113,7 +142,7 @@
 
         const [_, cakeData, models] = await Promise.all([
           preloadFonts, 
-          API.getCake(cakeIdFromUrl),
+          getCake,
           new ModelLoader().load(modelPaths, (progress) => {
             if (progress > 0.9999) 
               progress = 1;

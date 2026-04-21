@@ -7,7 +7,7 @@ THREE.Mesh.prototype.raycast = acceleratedRaycast;
 import { randFloat } from 'three/src/math/MathUtils.js';
 import { Text as TrText } from 'troika-three-text';
 import { findPlacements } from './algo.js';
-import { BalloonObject, Bday314Object, CakeObject, CandleObject, CandlePlacementObject } from './object.js';
+import { BalloonObject, Bday314Object, CakeObject, CandleObject, CandlePlacementObject, LayersCakeObject } from './object.js';
 import { Bday314Renderer } from './renderer.js';
 import { intersectPosTop2Bot, randomizeMatrix } from './threejs_util.js';
 import { Bday314World } from './world.js';
@@ -28,7 +28,7 @@ export class Canvas3dApp
         this.renderer = new Bday314Renderer(width, height, window.devicePixelRatio, this.scene, this.camera, this.world);
         this.domElement = this.renderer.domElement();
         this.controls = this.renderer.controls;
-        // temp
+        
         this.controls.disconnect();
 
         this.global = this;
@@ -39,6 +39,7 @@ export class Canvas3dApp
     init(models)
     {
 
+        // lights
         const light5 = new THREE.DirectionalLight(0xffffff, 3);
         light5.position.set(-1, 0.5, 5);
         const targetObj = new THREE.Object3D();
@@ -50,7 +51,7 @@ export class Canvas3dApp
         const lightAmbient = new THREE.AmbientLight(0xffffff, 0.15);
         this.scene.add(lightAmbient);
 
-
+        // grids
         /*const gridHelper = new THREE.GridHelper(10, 100, 0xff0000, 0x0000ff);
         this.scene.add(gridHelper);
 
@@ -61,13 +62,16 @@ export class Canvas3dApp
 
         this.models = models;
 
+        this.global.cakeConfig = {
+            type: 'layers',
+            decoration: {type: 'snow'},
+            colors: {}
+        };
 
-        const bday314cake = new CakeObject(models['tempcake3-organized.glb'], this.global); //candleless_cake3 // tempcake2
+        const bday314cake = cakeObjectFromType('layers', this.global, this.models); //new CakeObject(models['tempcake3-organized.glb'], this.global);
         bday314cake.position.set(0,0.30,0);
         this.world.add(bday314cake);
-        this.global.cakeConfig = {
-            obj: bday314cake
-        };
+        this.global.cakeConfig.obj = bday314cake;
 
 
         this.controls.setTarget(
@@ -314,7 +318,8 @@ export class Canvas3dApp
 
     setDecoration(decorationData)
     {
-        this.cakeConfig.decoration.type = decorationData.type;
+        console.debug('this.cakeconfig', this.cakeConfig);
+        this.global.cakeConfig.decoration.type = decorationData.type;
 
         // remove
         if (this.global.cakeConfig.decoration?.obj)
@@ -413,13 +418,14 @@ export class Canvas3dApp
     
     changeCake(cakeType) 
     {
-        this.cakeConfig.type = cakeType;
-        this.world.remove(this.cakeConfig.obj);
+        this.global.cakeConfig.type = cakeType;
+        if (this.global.cakeConfig.obj)
+            this.world.remove(this.global.cakeConfig.obj);
         
-        const bday314cake = new CakeObject(this.models[cakeModelFromType(cakeType)], this.global);
+        const bday314cake = cakeObjectFromType(cakeType, this.global, this.models);
         bday314cake.position.set(0,0.30,0);
         this.world.add(bday314cake);
-        this.cakeConfig.obj = bday314cake;
+        this.global.cakeConfig.obj = bday314cake;
     }
 
     changeCandle(candleModelData)
@@ -449,9 +455,35 @@ export class Canvas3dApp
 
         const material = new THREE.MeshStandardMaterial( { map:texture } );
         material.side = THREE.DoubleSide;
-        this.cakeConfig.obj.top.material = material;
-        this.cakeConfig.obj.top.material.needsUpdate = true;
+        this.global.cakeConfig.obj.top.material = material;
+        this.global.cakeConfig.obj.top.material.needsUpdate = true;
     }
+}
+
+
+function cakeObjectFromType(type, context, models) {
+    let modelName;
+    let obj;
+    switch (type) {
+        case "layers":
+            modelName = 'tempcake3-organized.glb';
+            obj = new LayersCakeObject(models[modelName], context);
+            break;
+        case "penguin":
+            modelName = 'pengucake.glb';
+            obj = new CakeObject(models[modelName], context);
+            break;
+        case "dog":
+            modelName = 'dogcake1.glb';
+            obj = new CakeObject(models[modelName], context);
+            break;
+        case "photo":
+            modelName = 'elevated_photo_cake_rect.glb';
+            obj = new CakeObject(models[modelName], context);
+            break;
+    };
+
+    return obj;
 }
 
 

@@ -200,8 +200,14 @@
           this.update({email: e.target.value});
         },
         async sendLinkToEmail() {
-          const res = await API.sendAdminLinkToEmail(this.state.GState.cake_uuid.get(), this.state.GState.admin_pin.get(), this.state.email);
-          this.state.email = '';
+          if (State.admin_token.get() == undefined) {
+            console.error('admin token is not set, cannot send email');
+            return;
+          }
+
+          const res = await API.sendAdminLinkToEmail(this.state.GState.cake_uuid.get(), this.state.GState.admin_pin.get(), this.state.email, State.admin_token.get());
+          this.$('#email-input').value = '';
+          this.update({email: ''});
         },
         showShareDialog(e) {
           this.update({isShareDialogVisible: true});

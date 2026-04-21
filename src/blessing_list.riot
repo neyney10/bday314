@@ -159,7 +159,7 @@
                 console.log('[debug] removing blessing...', index, blessing_id, State);
                 this.update({inProgress: [...this.state.inProgress, index]});
                 
-                if (await API.removeBlessing(State.cake_uuid.get(), State.admin_pin.get(), blessing_id))
+                if (await API.removeBlessing(State.cake_uuid.get(), State.admin_pin.get(), blessing_id, State.admin_token.get()))
                 {
                     const remIdx = this.state.inProgress.indexOf(index);
                     this.state.inProgress.splice(remIdx, 1);

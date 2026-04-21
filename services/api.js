@@ -1,7 +1,7 @@
 const API_URL = import.meta.env.VITE_API_URL;
-//'https://bday314srv.neyney10.workers.dev'; //'http://127.0.0.1:8787';// //'http://192.168.1.112:3000';//'http://localhost:3000';
 
-export async function getCake(id) {
+
+export async function getCake(id) {//save token
     if (!id)
     {
         return null;
@@ -25,7 +25,7 @@ export async function getCake(id) {
     return res;
 }
 
-export async function createCake(cakeData, title) {
+export async function createCake(cakeData, title) {//save token
     const body = {
         meta: {title: title},
         cake: cakeData,
@@ -58,7 +58,7 @@ export async function createCake(cakeData, title) {
 }
 
 
-export async function sendAdminLinkToEmail(id, admin_pin, email_address) {
+export async function sendAdminLinkToEmail(id, admin_pin, email_address, admin_token) { //verify token
     const body = {
         email_address: email_address,
     };
@@ -70,6 +70,7 @@ export async function sendAdminLinkToEmail(id, admin_pin, email_address) {
             method: "POST",
             headers: { 
                 "Content-Type": "application/json",
+                "Authorization": `Bearer ${admin_token}`
             },
             body: JSON.stringify(body),
         });
@@ -78,8 +79,8 @@ export async function sendAdminLinkToEmail(id, admin_pin, email_address) {
             throw new Error(`Response status: ${response.status}`);
         }
 
-        const json = await response.json();
-        return json;
+        const text = await response.text();
+        return text;
 
     } catch (error) {
         console.error(error.message);
@@ -108,11 +109,14 @@ export async function addBlessing(id, blessing) {
 }
 
 
-export async function removeBlessing(id, admin_pin, blessing_id) {
+export async function removeBlessing(id, admin_pin, blessing_id, admin_token) {//verify token
     const url = API_URL + `/cake/${id}-${admin_pin}/blessings/${blessing_id}`;
     try {
         const response = await fetch(url, {
             method: "DELETE",
+            headers: {
+                "Authorization": `Bearer ${admin_token}`
+            }
         });
 
         if (!response.ok) {

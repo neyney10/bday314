@@ -18,7 +18,8 @@
     ondecorationChange={onDecorationChange}
     oncakeTypeChange={onCakeTypeChange}
     ontitleChanged={setCakeTitle}
-    onimageSelectedForPhotoCake={setImagePhotoCake}>
+    onimageSelectedForPhotoCake={setImagePhotoCake}
+    ondesignChange={onDesignChange}>
   </cake_menu>
   <candle_selection if={getStateName() == 'candleSelection'} 
     candleTypes={state.candleTypes}
@@ -166,11 +167,6 @@
         this.state.app.init(props.models);
         this.state.app.menuActor = this.state.menuActor;
         this.state.app.candleBlessingConfig = new BlessingConfig();
-        Object.assign(this.state.app.cakeConfig, {
-            type: 'layers',
-            decoration: {type: 'snow'},
-            colors: {}
-        });
 
         this.$("#canvasWrapper").appendChild(this.state.app.domElement);
 
@@ -240,11 +236,7 @@
           }
 
           State.cake_uuid.set(cakeData.meta.uuid);
-          const currUrl = window.location.href;
-          const splittedCurrUrl = currUrl.split('/');
-          const cakeIdFromUrl = splittedCurrUrl[splittedCurrUrl.length-1];
-          if (cakeIdFromUrl.split('-').length > 1)
-            State.admin_pin.set(cakeIdFromUrl.split('-')[1]);
+
 
           let textBlessings = [];
           for (const b of cakeData.blessings)
@@ -284,6 +276,9 @@
       },
       setImagePhotoCake(e) {
         this.state.app.loadTextureIntoPhotoCake(e.detail);
+      },
+      onDesignChange(e) {
+        this.state.app.cakeConfig.obj.changeDesign(e.detail);
       },
       changeCandleType(e) {
         this.state.app.changeCandle(e.detail);
