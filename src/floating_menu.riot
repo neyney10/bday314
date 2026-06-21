@@ -6,7 +6,7 @@
       </div> 
   </c_button>
 
-  <c_button class="menu-button" onclick={(e) => dispatchEventName(e, 'cake')}>
+  <c_button class="menu-button" onclick={(e) => dispatchEventName(e, 'cake')} disabled={props.isAlreadyAddedBlessing}>
     <div class="menu-button-content">
       <i class="fa-solid fa-cake-candles"></i>
       <span>הוסף נר</span>
@@ -35,7 +35,7 @@
 
     <template slot="body">
       <div id="share-dialog-body">
-        <p>שתפו את העוגה עם חברים על מנת לשמח את בעל הברכה.</p>
+        <p>שתפו את העוגה עם חברים על מנת לשמח את בעל היום המיוחד.</p>
         <a href="{shareLink()}">{shareLink()}</a>
         <canvas id="qrcode-canvas"></canvas>
 
@@ -121,7 +121,7 @@
 
         p {
           margin: 0;
-          word-break: break-all;
+          word-break: break-word;
         }
 
         #qrcode-canvas {

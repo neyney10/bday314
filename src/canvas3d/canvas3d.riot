@@ -2,7 +2,7 @@
   <div id="canvasWrapper"></div>
 
   <div id="menu" if={getStateName() == 'mainMenu' && state.GState.cake_uuid.get()}>
-    <floating_menu oncake={zoomToCake} zoomedToCandle={state.zoomedToCandle}></floating_menu>
+    <floating_menu oncake={zoomToCake} zoomedToCandle={state.zoomedToCandle} isAlreadyAddedBlessing={isAddedBlessingAlready(state.GState.cake_uuid.get())}></floating_menu>
   </div>
   <blessing_list if={getStateName() == 'mainMenu' && state.GState.cake_uuid.get() && state.blessings.getArr().length > 0} 
     items={state.blessings}
@@ -282,6 +282,12 @@
       },
       changeCandleType(e) {
         this.state.app.changeCandle(e.detail);
+
+        if (e.detail.name == 'bicolor')
+        { // temp default color
+          this.changeCandleColor1(new CustomEvent(`op1next`, {detail: 0x00FF00}));
+          this.changeCandleColor2(new CustomEvent(`op1next`, {detail: 0x0000FF}));
+        } 
       },
       changeCandleColor1(e) {
         const candle = this.state.app.candleBlessingConfig.candle.obj;
@@ -411,7 +417,9 @@
           console.debug('[debug]','submitting blessing...', this.state.app.candleBlessingConfig.export());
           res = await API.addBlessing(cakeId, this.state.app.candleBlessingConfig.export());
           showSpinner = false;
+          localStorage.setItem(this.blessingHash(State.cake_uuid.get()), res.id);
           this.update({blessingCreationInProgress: false});
+          
         }
         catch (e) {
           console.error(e);
@@ -463,6 +471,13 @@
       handleCakeCreated(e) {
         console.log('canvas3d', 'handleCakeCreated', e);
         this.state.app.setTitleText(e.detail.title);
+      },
+      blessingHash(cake_id, blessing_id) {
+          return `blessing-${cake_id}`;
+      },
+      isAddedBlessingAlready(cake_id) {
+        console.log('isAddedBlessingAlready', localStorage.getItem(this.blessingHash(cake_id)));
+        return localStorage.getItem(this.blessingHash(cake_id));
       },
       components: {
         floating_menu,

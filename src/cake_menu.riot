@@ -4,7 +4,7 @@
             <span style="background: url('/images/squigglylines.svg'); width:100%; height: 2em; background-size: 100% 400%; display: block;"></span>
             <h1 style="text-align:center;">צרו עוגה וירטואלית משלכם</h1>
 
-            שלום וברוכים הבאים ליצירת עוגת יום ההולדת המושלמת! כאן תוכלו לעצב עוגה וירטואלית עם מגוון אפשרויות, לשתף אותה עם חברים ולחגוג יחד אתכם. לחצו על "התחל" כדי להתחיל לעצב את העוגה שלכם ולהפוך את יום ההולדת למיוחד עוד יותר! 🎂🎉
+            שלום וברוכים הבאים ליצירת עוגת יום ההולדת הוירטואלית שלכם! כאן תוכלו לעצב עוגה וירטואלית עם מגוון אפשרויות, לשתף אותה עם חברים ולחגוג ביחד לגמרי מרחוק. לחצו על "התחל" כדי להתחיל לעצב את העוגה שלכם ולהפוך את יום ההולדת או המאורע למיוחד עוד יותר! 🎂🎉
             <div class="welcome-screen-actions" style="display: flex; gap: 1em;">
                 <c_button id="begin-stepper-button" onclick={e => update({isWelcomeScreenVisible: false})}>התחל</c_button>
                 <c_button id="about-button" onclick={e => update({isAboutDialogVisible: true})}>אודות</c_button>
@@ -209,6 +209,7 @@
 
         #begin-stepper-button {
             display: block;
+            width: 100%;    
         }
 
         #decorations {
@@ -315,7 +316,7 @@
 
                 p {
                     margin: 0;
-                    word-break: break-all;
+                    word-break: break-word;
                 }
             }
         }

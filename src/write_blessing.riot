@@ -6,14 +6,14 @@
 
     <template slot="body">
       <div id="body">
-        <input id="userName" placeholder="שמך." maxlength="22"/>
-        <textarea id="userText" placeholder="אחל מזל טוב!" maxlength="512" onchange={onBlessingChange} onkeypress={onBlessingChange}></textarea>
+        <input id="userName" placeholder="שמך." maxlength="22" onchange={onNameChange} onkeyup={onNameChange}/>
+        <textarea id="userText" placeholder="אחל מזל טוב!" maxlength="512" onchange={onBlessingChange} onkeyup={onBlessingChange}></textarea>
         <span>{state.blessingLength}/{this.$('#userText').maxLength}</span>
       </div>
     </template>
 
     <template slot="actions">
-      <c_button id="select" onclick={submitBlessing}>סיום</c_button>
+      <c_button id="select" onclick={submitBlessing} disabled={state.blessingLength == 0 || state.nameLength == 0}>סיום</c_button>
     </template>
   </c_dialog>
 
@@ -74,12 +74,20 @@
     export default { 
         onMounted() {
         },
+        onNameChange(e) {
+          this.update({nameLength: e.target.value.length});
+        },
         onBlessingChange(e) {
           this.update({blessingLength: e.target.value.length});
         },
         submitBlessing(e) {
-          this.$('#select').classList.add('disabled');
-          this.dispatchNewBlessingEvent(e);
+          const isNameNotEmpty = this.$("#userName").value.length != 0;
+          const isBlessingNotEmpty = this.state.blessingLength != 0;
+          if (isBlessingNotEmpty && isNameNotEmpty)
+          {
+            this.$('#select').classList.add('disabled');
+            this.dispatchNewBlessingEvent(e);
+          }
         },
         dispatchNewBlessingEvent(e) {
           e.stopPropagation();
@@ -96,6 +104,7 @@
         },
         state: {
           blessingLength: 0,
+          nameLength: 0
         }
     }
   </script>

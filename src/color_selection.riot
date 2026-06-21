@@ -141,7 +141,7 @@
                     this.state.activeElem.getElementsByClassName('color-bottom')[0].style.background
                 ].map(c => this.rgbStrToHex(c));
 
-                console.log('focusColorPrewview', colors);
+                console.log('focusColorPreview', colors);
                 this.dispatchEventColorSelected(colors);
             },
             dispatchEventColorSelected(colors) {
